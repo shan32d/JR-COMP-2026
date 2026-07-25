@@ -39,7 +39,15 @@ main { max-width: 900px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 .lede { color: var(--muted); margin: 0 0 0.5rem; }
 
 .wheel-wrap { display: flex; justify-content: center; }
-.wheel { width: 100%; max-width: 520px; height: auto; }
+.wheel { width: 100%; max-width: 680px; height: auto; }
+
+.house {
+  fill: url(#g-house);
+  stroke: url(#g-house);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  opacity: 0.2;
+}
 
 .seg { cursor: pointer; outline: none; }
 .seg-arc { fill: none; stroke-width: 60; stroke-linecap: butt; }
@@ -59,7 +67,7 @@ main { max-width: 900px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 .seg:focus-visible .seg-arc, .seg:focus-visible .seg-head { transform: scale(1.035); }
 .seg:hover { filter: drop-shadow(0 4px 10px rgba(23, 50, 58, 0.22)); }
 
-.hub { fill: #fff; stroke: var(--line); stroke-width: 2; }
+.hub { fill: #fff; fill-opacity: 0.93; stroke: var(--line); stroke-width: 2; }
 .hub-title { text-anchor: middle; font-size: 19px; font-weight: 700; fill: var(--ink); }
 .hub-sub { text-anchor: middle; font-size: 14px; fill: var(--muted); }
 

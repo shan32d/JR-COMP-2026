@@ -32,7 +32,20 @@
           <linearGradient id="g-maintenance" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#7ed69a" /><stop offset="100%" stop-color="#4fb87a" />
           </linearGradient>
+          <linearGradient id="g-house" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3aa8c4" /><stop offset="100%" stop-color="#4fb87a" />
+          </linearGradient>
         </defs>
+
+        <!-- house watermark behind the cycle -->
+        <g class="house" aria-hidden="true">
+          <path fill-rule="evenodd" d="
+            M 45 478 L 45 210 L 10 210 L 260 18 L 510 210 L 475 210 L 475 478 Z
+            M 85 385 L 150 385 L 150 445 L 85 445 Z
+            M 370 385 L 435 385 L 435 445 L 370 445 Z
+            M 232 400 L 288 400 L 288 478 L 232 478 Z" />
+          <path d="M 380 70 L 418 70 L 418 139 L 380 110 Z" />
+        </g>
 
         <!-- Listing -->
         <g class="seg" data-view="view-listing" tabindex="0" role="button" aria-label="Listing">
