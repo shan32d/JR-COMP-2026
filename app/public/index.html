@@ -8,19 +8,93 @@
 </head>
 <body>
 <header>
-  <h1>🏠 Property Management Assistant</h1>
-  <p class="tagline">AI tools for property managers — generate listings, inspect condition, verify repairs.</p>
-  <nav class="tabs">
-    <button class="tab active" data-panel="panel-listing">📝 Listing Generator</button>
-    <button class="tab" data-panel="panel-inspect">🔍 AI Inspection</button>
-    <button class="tab" data-panel="panel-repair">🔧 Repair Verification</button>
-  </nav>
+  <a href="#" id="home-link" class="brand">
+    <span class="brand-mark">🏠</span>
+    <span class="brand-text">Property Management Assistant</span>
+  </a>
 </header>
 
 <main>
-  <!-- Listing Generator -->
-  <section id="panel-listing" class="panel active">
-    <h2>Listing Generator</h2>
+  <!-- ============ HOME ============ -->
+  <section id="view-home" class="view active">
+    <h1>The property management cycle, assisted by AI</h1>
+    <p class="lede">Pick a stage to get started.</p>
+
+    <div class="wheel-wrap">
+      <svg viewBox="0 0 520 500" class="wheel" role="group" aria-label="Property management cycle">
+        <defs>
+          <linearGradient id="g-listing" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#5ec8d8" /><stop offset="100%" stop-color="#3aa8c4" />
+          </linearGradient>
+          <linearGradient id="g-inspection" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#4fc9ae" /><stop offset="100%" stop-color="#31a98c" />
+          </linearGradient>
+          <linearGradient id="g-maintenance" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#7ed69a" /><stop offset="100%" stop-color="#4fb87a" />
+          </linearGradient>
+        </defs>
+
+        <!-- Listing -->
+        <g class="seg" data-view="view-listing" tabindex="0" role="button" aria-label="Listing">
+          <path class="seg-arc" stroke="url(#g-listing)"
+                d="M 141.3 150.4 A 155 155 0 0 1 361.7 133.0" />
+          <path class="seg-head" fill="url(#g-listing)"
+                d="M 334.1 164.7 L 389.2 101.3 L 395.6 174.9 Z" />
+          <path id="lbl-listing" class="lbl-path"
+                d="M 137.4 147.2 A 160 160 0 0 1 365.0 129.2" />
+          <text class="seg-label"><textPath href="#lbl-listing" startOffset="50%">Listing</textPath></text>
+        </g>
+
+        <!-- Inspection -->
+        <g class="seg" data-view="view-inspect" tabindex="0" role="button" aria-label="Inspection">
+          <path class="seg-arc" stroke="url(#g-inspection)"
+                d="M 405.7 197.0 A 155 155 0 0 1 310.5 396.6" />
+          <path class="seg-head" fill="url(#g-inspection)"
+                d="M 296.8 356.8 L 324.1 436.3 L 257.3 405.0 Z" />
+          <path id="lbl-inspection" class="lbl-path"
+                d="M 312.1 401.3 A 160 160 0 0 0 410.4 195.3" />
+          <text class="seg-label"><textPath href="#lbl-inspection" startOffset="50%">Inspection</textPath></text>
+        </g>
+
+        <!-- Maintenance -->
+        <g class="seg" data-view="view-repair" tabindex="0" role="button" aria-label="Maintenance">
+          <path class="seg-arc" stroke="url(#g-maintenance)"
+                d="M 233.1 402.6 A 155 155 0 0 1 107.8 220.4" />
+          <path class="seg-head" fill="url(#g-maintenance)"
+                d="M 149.1 228.4 L 66.6 212.4 L 127.1 170.2 Z" />
+          <path id="lbl-maintenance" class="lbl-path"
+                d="M 102.9 219.5 A 160 160 0 0 0 232.2 407.6" />
+          <text class="seg-label"><textPath href="#lbl-maintenance" startOffset="50%">Maintenance</textPath></text>
+        </g>
+
+        <!-- hub -->
+        <circle cx="260" cy="250" r="92" class="hub" />
+        <text x="260" y="238" class="hub-title">Every property,</text>
+        <text x="260" y="262" class="hub-title">every stage</text>
+        <text x="260" y="290" class="hub-sub">Click a stage →</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <button class="card" data-view="view-listing">
+        <h3>📝 Listing</h3>
+        <p>Turn rough notes into a listing-ready description — and see what information is still missing.</p>
+      </button>
+      <button class="card" data-view="view-inspect">
+        <h3>🔍 Inspection</h3>
+        <p>Compare entry photos against current ones. Damage or fair wear and tear, flagged per area.</p>
+      </button>
+      <button class="card" data-view="view-repair">
+        <h3>🔧 Maintenance</h3>
+        <p>Check the contractor's after photo against the reported damage before signing off the job.</p>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ LISTING ============ -->
+  <section id="view-listing" class="view">
+    <button class="back" data-view="view-home">← Back to the cycle</button>
+    <h2>📝 Listing Generator</h2>
     <p class="hint">Type words, phrases, or sentences describing the property. One click generates a listing-ready description and flags any missing information.
       <a href="#" id="listing-example">Try example</a></p>
     <textarea id="listing-input" rows="5"
@@ -34,17 +108,18 @@
     </div>
   </section>
 
-  <!-- AI Inspection -->
-  <section id="panel-inspect" class="panel">
-    <h2>AI Inspection</h2>
+  <!-- ============ INSPECTION ============ -->
+  <section id="view-inspect" class="view">
+    <button class="back" data-view="view-home">← Back to the cycle</button>
+    <h2>🔍 AI Inspection</h2>
     <p class="hint">Upload photos taken <strong>before the rental started</strong> and photos from the <strong>current inspection</strong>. The AI compares them and flags damage vs fair wear-and-tear.</p>
     <div class="two-col">
-      <div class="dropzone" id="entry-zone">
+      <div class="dropzone">
         <h4>Entry photos <span class="sub">(before rental start)</span></h4>
         <input type="file" id="entry-files" accept="image/jpeg,image/png,image/webp" multiple />
         <div class="thumbs" id="entry-thumbs"></div>
       </div>
-      <div class="dropzone" id="current-zone">
+      <div class="dropzone">
         <h4>Current inspection photos</h4>
         <input type="file" id="current-files" accept="image/jpeg,image/png,image/webp" multiple />
         <div class="thumbs" id="current-thumbs"></div>
@@ -62,17 +137,18 @@
     </div>
   </section>
 
-  <!-- Repair Verification -->
-  <section id="panel-repair" class="panel">
-    <h2>Repair Verification</h2>
+  <!-- ============ MAINTENANCE ============ -->
+  <section id="view-repair" class="view">
+    <button class="back" data-view="view-home">← Back to the cycle</button>
+    <h2>🔧 Repair Verification</h2>
     <p class="hint">Upload the <strong>before</strong> photo (reported damage) and the <strong>after</strong> photo submitted by the contractor. The AI verifies whether the work appears done.</p>
     <div class="two-col">
-      <div class="dropzone" id="before-zone">
+      <div class="dropzone">
         <h4>Before <span class="sub">(reported damage)</span></h4>
         <input type="file" id="before-file" accept="image/jpeg,image/png,image/webp" />
         <div class="thumbs" id="before-thumb"></div>
       </div>
-      <div class="dropzone" id="after-zone">
+      <div class="dropzone">
         <h4>After <span class="sub">(contractor photo)</span></h4>
         <input type="file" id="after-file" accept="image/jpeg,image/png,image/webp" />
         <div class="thumbs" id="after-thumb"></div>

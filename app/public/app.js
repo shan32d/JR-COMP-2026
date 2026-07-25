@@ -1,13 +1,25 @@
 "use strict";
 
-// ---------- tabs ----------
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.panel).classList.add("active");
+// ---------- navigation (home wheel <-> feature views) ----------
+function showView(id) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === id));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.querySelectorAll("[data-view]").forEach((el) => {
+  el.addEventListener("click", () => showView(el.dataset.view));
+  // wheel segments are <g> elements: make them keyboard-operable
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      showView(el.dataset.view);
+    }
   });
+});
+
+document.getElementById("home-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  showView("view-home");
 });
 
 // ---------- helpers ----------
