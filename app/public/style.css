@@ -13,7 +13,15 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(180deg, #eaf7f7 0%, #f0fbf6 100%);
+  /* photo at ~50% strength: a translucent blue-green wash sits over it */
+  background-color: #eaf7f7;
+  background-image:
+    linear-gradient(180deg, rgba(234, 247, 247, 0.52) 0%, rgba(240, 251, 246, 0.52) 100%),
+    url("background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   min-height: 100vh;
   color: var(--ink);
   line-height: 1.55;
@@ -35,19 +43,17 @@ main { max-width: 900px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 
 /* ---------- home ---------- */
 #view-home { text-align: center; }
-#view-home h1 { font-size: 1.75rem; margin: 0.25rem 0 0.35rem; color: #17323a; }
-.lede { color: var(--muted); margin: 0 0 0.5rem; }
+#view-home h1 {
+  font-size: 1.75rem;
+  margin: 0.25rem 0 0.35rem;
+  color: #17323a;
+  text-shadow: 0 1px 6px rgba(255, 255, 255, 0.95);
+}
+.lede { color: #3d5c66; margin: 0 0 0.5rem; text-shadow: 0 1px 5px rgba(255, 255, 255, 0.95); }
 
 .wheel-wrap { display: flex; justify-content: center; }
 .wheel { width: 100%; max-width: 680px; height: auto; }
 
-.house {
-  fill: url(#g-house);
-  stroke: url(#g-house);
-  stroke-width: 4;
-  stroke-linejoin: round;
-  opacity: 0.2;
-}
 
 .seg { cursor: pointer; outline: none; }
 .seg-arc { fill: none; stroke-width: 60; stroke-linecap: butt; }
@@ -67,7 +73,7 @@ main { max-width: 900px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 .seg:focus-visible .seg-arc, .seg:focus-visible .seg-head { transform: scale(1.035); }
 .seg:hover { filter: drop-shadow(0 4px 10px rgba(23, 50, 58, 0.22)); }
 
-.hub { fill: #fff; fill-opacity: 0.93; stroke: var(--line); stroke-width: 2; }
+.hub { fill: #fff; stroke: var(--line); stroke-width: 2; }
 .hub-title { text-anchor: middle; font-size: 19px; font-weight: 700; fill: var(--ink); }
 .hub-sub { text-anchor: middle; font-size: 14px; fill: var(--muted); }
 
@@ -217,5 +223,16 @@ th { background: #f0fafa; }
   border-radius: 0 8px 8px 0;
 }
 
-footer { text-align: center; padding: 1rem; color: var(--muted); font-size: 0.85rem; }
-footer code { background: #dff0f1; padding: 0.15rem 0.4rem; border-radius: 4px; }
+footer {
+  text-align: center;
+  padding: 1rem;
+  color: #3d5c66;
+  font-size: 0.85rem;
+  text-shadow: 0 1px 5px rgba(255, 255, 255, 0.95);
+}
+footer code {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  text-shadow: none;
+}
