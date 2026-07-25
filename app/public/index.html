@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Property Management Assistant</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <h1>🏠 Property Management Assistant</h1>
+  <p class="tagline">AI tools for property managers — generate listings, inspect condition, verify repairs.</p>
+  <nav class="tabs">
+    <button class="tab active" data-panel="panel-listing">📝 Listing Generator</button>
+    <button class="tab" data-panel="panel-inspect">🔍 AI Inspection</button>
+    <button class="tab" data-panel="panel-repair">🔧 Repair Verification</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Listing Generator -->
+  <section id="panel-listing" class="panel active">
+    <h2>Listing Generator</h2>
+    <p class="hint">Type words, phrases, or sentences describing the property. One click generates a listing-ready description and flags any missing information.
+      <a href="#" id="listing-example">Try example</a></p>
+    <textarea id="listing-input" rows="5"
+      placeholder="e.g. 123 High St Brisbane City, $650 per week, 2 bed 2 bath, unfurnished, pet friendly, balcony with river views, 3 min walk to train station"></textarea>
+    <div class="field-error" id="listing-error"></div>
+    <button id="listing-btn" class="primary">Generate Listing</button>
+    <div id="listing-result" class="result hidden">
+      <h3>Generated listing</h3>
+      <pre id="listing-text"></pre>
+      <div id="listing-missing"></div>
+    </div>
+  </section>
+
+  <!-- AI Inspection -->
+  <section id="panel-inspect" class="panel">
+    <h2>AI Inspection</h2>
+    <p class="hint">Upload photos taken <strong>before the rental started</strong> and photos from the <strong>current inspection</strong>. The AI compares them and flags damage vs fair wear-and-tear.</p>
+    <div class="two-col">
+      <div class="dropzone" id="entry-zone">
+        <h4>Entry photos <span class="sub">(before rental start)</span></h4>
+        <input type="file" id="entry-files" accept="image/jpeg,image/png,image/webp" multiple />
+        <div class="thumbs" id="entry-thumbs"></div>
+      </div>
+      <div class="dropzone" id="current-zone">
+        <h4>Current inspection photos</h4>
+        <input type="file" id="current-files" accept="image/jpeg,image/png,image/webp" multiple />
+        <div class="thumbs" id="current-thumbs"></div>
+      </div>
+    </div>
+    <div class="field-error" id="inspect-error"></div>
+    <button id="inspect-btn" class="primary">Generate Inspection Report</button>
+    <div id="inspect-result" class="result hidden">
+      <h3>Inspection report</h3>
+      <p id="inspect-summary" class="summary"></p>
+      <table id="inspect-table">
+        <thead><tr><th>Area</th><th>Status</th><th>Details</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Repair Verification -->
+  <section id="panel-repair" class="panel">
+    <h2>Repair Verification</h2>
+    <p class="hint">Upload the <strong>before</strong> photo (reported damage) and the <strong>after</strong> photo submitted by the contractor. The AI verifies whether the work appears done.</p>
+    <div class="two-col">
+      <div class="dropzone" id="before-zone">
+        <h4>Before <span class="sub">(reported damage)</span></h4>
+        <input type="file" id="before-file" accept="image/jpeg,image/png,image/webp" />
+        <div class="thumbs" id="before-thumb"></div>
+      </div>
+      <div class="dropzone" id="after-zone">
+        <h4>After <span class="sub">(contractor photo)</span></h4>
+        <input type="file" id="after-file" accept="image/jpeg,image/png,image/webp" />
+        <div class="thumbs" id="after-thumb"></div>
+      </div>
+    </div>
+    <div class="field-error" id="repair-error"></div>
+    <button id="repair-btn" class="primary">Verify Repair</button>
+    <div id="repair-result" class="result hidden">
+      <h3>Verdict: <span id="repair-verdict" class="badge"></span></h3>
+      <p id="repair-reasoning"></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>This app is also an <strong>MCP server</strong> — connect it to Claude:
+    <code id="mcp-cmd">claude mcp add --transport http propmate &lt;this-origin&gt;/mcp</code></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
