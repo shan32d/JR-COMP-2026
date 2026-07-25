@@ -8,9 +8,15 @@ import type * as z4 from "zod/v4";
 const MODEL = "claude-opus-5";
 const DEFAULT_TIMEOUT_MS = 60_000;
 
-const client = new Anthropic({
-  maxRetries: 2, // SDK retries 429 / 5xx / connection errors with backoff
-});
+// Lazily constructed so .env loading (in index.ts) runs before the SDK reads
+// ANTHROPIC_API_KEY — ESM evaluates imported modules before the entrypoint body.
+let _client: Anthropic | undefined;
+function client(): Anthropic {
+  _client ??= new Anthropic({
+    maxRetries: 2, // SDK retries 429 / 5xx / connection errors with backoff
+  });
+  return _client;
+}
 
 export class LlmError extends Error {
   constructor(
@@ -104,7 +110,7 @@ export async function generate(opts: {
 }): Promise<string> {
   try {
     const response = await withRetry(() =>
-      client.messages.create(
+      client().messages.create(
         {
           model: MODEL,
           max_tokens: opts.maxTokens,
@@ -132,7 +138,7 @@ async function structuredCall<S extends z4.ZodType>(opts: {
 }): Promise<z4.infer<S>> {
   try {
     const response = await withRetry(() =>
-      client.messages.parse(
+      client().messages.parse(
         {
           model: MODEL,
           max_tokens: opts.maxTokens,
