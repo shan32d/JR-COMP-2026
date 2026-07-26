@@ -78,6 +78,16 @@ main { max-width: 1060px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 .hub-group:hover .hub,
 .hub-group:focus-visible .hub { stroke: var(--teal); stroke-width: 3; }
 .hub-group text { text-anchor: middle; pointer-events: none; }
+
+/* resting state swaps to the portfolio numbers on hover / keyboard focus */
+.hub-idle, .hub-stats { transition: opacity 0.18s ease; }
+.hub-stats { opacity: 0; }
+.hub-group:hover .hub-idle,
+.hub-group:focus-visible .hub-idle { opacity: 0; }
+.hub-group:hover .hub-stats,
+.hub-group:focus-visible .hub-stats { opacity: 1; }
+
+.hub-title { font-size: 19px; font-weight: 700; fill: var(--ink); }
 .hub-label { font-size: 12px; font-weight: 700; fill: var(--muted); letter-spacing: 0.12em; }
 .hub-count { font-size: 38px; font-weight: 700; fill: var(--ink); }
 .hub-unit { font-size: 13px; fill: var(--muted); }

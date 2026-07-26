@@ -71,12 +71,22 @@
         <g class="hub-group" data-view="view-portfolio" tabindex="0" role="button"
            aria-label="Open portfolio">
           <circle cx="260" cy="250" r="92" class="hub" />
-          <text x="260" y="203" class="hub-label">UNDER MANAGEMENT</text>
-          <text x="260" y="238" class="hub-count" id="hub-count">—</text>
-          <text x="260" y="258" class="hub-unit" id="hub-unit">properties</text>
-          <text x="260" y="285" class="hub-stat" id="hub-value">—</text>
-          <text x="260" y="303" class="hub-stat" id="hub-yield">—</text>
-          <text x="260" y="325" class="hub-sub">View portfolio →</text>
+
+          <!-- resting state -->
+          <g class="hub-idle">
+            <text x="260" y="240" class="hub-title">Every property,</text>
+            <text x="260" y="264" class="hub-title">every stage</text>
+            <text x="260" y="292" class="hub-sub">View portfolio →</text>
+          </g>
+
+          <!-- revealed on hover / focus -->
+          <g class="hub-stats">
+            <text x="260" y="205" class="hub-label">UNDER MANAGEMENT</text>
+            <text x="260" y="243" class="hub-count" id="hub-count">—</text>
+            <text x="260" y="262" class="hub-unit" id="hub-unit">properties</text>
+            <text x="260" y="289" class="hub-stat" id="hub-value">—</text>
+            <text x="260" y="307" class="hub-stat" id="hub-yield">—</text>
+          </g>
         </g>
       </svg>
     </div>
