@@ -14,6 +14,7 @@ import {
   removeProperty,
   summarise,
 } from "./portfolio.js";
+import { buildMarketReport } from "./market.js";
 import { descriptionField, photoUrlList, singlePhotoUrl, parseOrThrow, ValidationError } from "./validation.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -114,6 +115,19 @@ app.post("/api/portfolio", (req, res) => {
     const input = parseOrThrow(propertyInputSchema, req.body);
     const property = addProperty(input);
     res.json({ property, summary: summarise() });
+  } catch (err) {
+    handleError(err, res);
+  }
+});
+
+app.get("/api/market/:id", async (req, res) => {
+  try {
+    const property = listProperties().find((p) => p.id === req.params.id);
+    if (!property) {
+      res.status(404).json({ error: "Property not found." });
+      return;
+    }
+    res.json(await buildMarketReport(property.address, property.value));
   } catch (err) {
     handleError(err, res);
   }

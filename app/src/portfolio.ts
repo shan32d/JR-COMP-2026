@@ -88,7 +88,7 @@ const SEED: PropertyInput[] = [
   { address: "123 High St, Brisbane City QLD", value: 780_000, weekly_rent: 650, status: "rented" },
   { address: "8/47 Vulture St, South Brisbane QLD", value: 615_000, weekly_rent: 540, status: "rented" },
   { address: "22 Kingsford Smith Dr, Hamilton QLD", value: 1_240_000, weekly_rent: 890, status: "rented" },
-  { address: "14 Beach Rd, Gold Coast QLD", value: 950_000, status: "vacant" },
+  { address: "14 Beach Rd, Surfers Paradise QLD", value: 950_000, status: "vacant" },
 ];
 
 for (const seed of SEED) addProperty(seed);

@@ -150,7 +150,7 @@ function renderPortfolio({ summary, properties }) {
       (p) =>
         `<tr><td>${escapeHtml(p.address)}</td>` +
         `<td><span class="badge ${p.status === "rented" ? "unchanged" : "fair_wear_and_tear"}">${p.status}</span></td>` +
-        `<td class="num">${moneyFull(p.value)}</td>` +
+        `<td class="num"><button class="value-link" data-market="${p.id}" title="Value history, projection and suburb data">${moneyFull(p.value)}</button></td>` +
         `<td class="num">${p.weekly_rent ? moneyFull(p.weekly_rent) : "—"}</td>` +
         `<td class="num">${p.yield_pct !== null ? p.yield_pct + "%" : "—"}</td>` +
         `<td class="num"><button class="row-remove" data-id="${p.id}" title="Remove">×</button></td></tr>`,
@@ -167,11 +167,100 @@ async function loadPortfolio() {
 }
 
 document.getElementById("portfolio-rows").addEventListener("click", async (e) => {
-  const btn = e.target.closest(".row-remove");
-  if (!btn) return;
-  const res = await fetch("/api/portfolio/" + btn.dataset.id, { method: "DELETE" });
-  if (res.ok) loadPortfolio();
+  const remove = e.target.closest(".row-remove");
+  if (remove) {
+    const res = await fetch("/api/portfolio/" + remove.dataset.id, { method: "DELETE" });
+    if (res.ok) loadPortfolio();
+    return;
+  }
+  const value = e.target.closest(".value-link");
+  if (value) openMarket(value.dataset.market);
 });
+
+// ---------- Value & market panel ----------
+function drawValueChart(history) {
+  const W = 720, H = 300, PAD = { t: 28, r: 20, b: 34, l: 68 };
+  const plotW = W - PAD.l - PAD.r, plotH = H - PAD.t - PAD.b;
+  const values = history.map((p) => p.value);
+  const min = Math.min(...values) * 0.94, max = Math.max(...values) * 1.06;
+  const x = (i) => PAD.l + (i / (history.length - 1)) * plotW;
+  const y = (v) => PAD.t + plotH - ((v - min) / (max - min)) * plotH;
+
+  const lastHistIdx = history.findIndex((p) => p.projected) - 1;
+  const hist = history.slice(0, lastHistIdx + 1);
+  const proj = history.slice(lastHistIdx); // include the join point
+
+  const pts = (arr, offset) => arr.map((p, i) => `${x(i + offset)},${y(p.value)}`).join(" ");
+  const gridVals = [0, 0.25, 0.5, 0.75, 1].map((f) => min + f * (max - min));
+
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Property value history and projection">
+    ${gridVals
+      .map(
+        (v) =>
+          `<line class="grid-line" x1="${PAD.l}" y1="${y(v)}" x2="${W - PAD.r}" y2="${y(v)}" />` +
+          `<text class="axis-text" x="${PAD.l - 8}" y="${y(v) + 4}" text-anchor="end">${money(Math.round(v))}</text>`,
+      )
+      .join("")}
+    <polygon class="hist-area" points="${x(0)},${PAD.t + plotH} ${pts(hist, 0)} ${x(lastHistIdx)},${PAD.t + plotH}" />
+    <polyline class="hist-line" points="${pts(hist, 0)}" />
+    <polyline class="proj-line" points="${pts(proj, lastHistIdx)}" />
+    ${history
+      .map(
+        (p, i) =>
+          `<circle class="dot${p.projected ? " proj" : ""}" cx="${x(i)}" cy="${y(p.value)}" r="4" />` +
+          `<text class="axis-text" x="${x(i)}" y="${H - 12}" text-anchor="middle">${p.year}</text>`,
+      )
+      .join("")}
+    <text class="dot-label" x="${x(lastHistIdx)}" y="${y(history[lastHistIdx].value) - 12}">${money(history[lastHistIdx].value)}</text>
+    <text class="dot-label" x="${x(history.length - 1)}" y="${y(history[history.length - 1].value) - 12}">${money(history[history.length - 1].value)}</text>
+    <line class="hist-line" x1="${W - 250}" y1="14" x2="${W - 228}" y2="14" />
+    <text class="legend-text" x="${W - 222}" y="18">history</text>
+    <line class="proj-line" x1="${W - 160}" y1="14" x2="${W - 138}" y2="14" />
+    <text class="legend-text" x="${W - 132}" y="18">projection</text>
+  </svg>`;
+  document.getElementById("value-chart").innerHTML = svg;
+}
+
+async function openMarket(id) {
+  showView("view-value");
+  document.getElementById("value-chart").innerHTML =
+    `<p class="chart-note">Loading market data…</p>`;
+  document.getElementById("value-stats").innerHTML = "";
+  try {
+    const m = await (await fetch("/api/market/" + id)).json();
+    document.getElementById("value-address").textContent = m.address;
+    document.getElementById("value-suburb").textContent = m.tenure.matched_sa2 || m.suburb;
+    drawValueChart(m.history);
+    document.getElementById("value-method").textContent =
+      `Growth shown: ${m.cagr_pct}% a year. ${m.projection_method}`;
+
+    const t = m.tenure;
+    const cards = [
+      t.available
+        ? ["Owner-occupier rate", t.owner_occupier_pct + "%", "ABS Census 2021", false]
+        : ["Owner-occupier rate", "—", "no ABS match for this suburb", false],
+      t.available
+        ? ["Rented", t.rented_pct + "%", "ABS Census 2021", false]
+        : ["Rented", "—", "no ABS match", false],
+      t.available ? ["Dwellings", t.dwellings.toLocaleString("en-AU"), "ABS Census 2021", false] : null,
+      ["Auction clearance", m.auction_clearance_pct + "%", "sample — needs CoreLogic/Domain feed", true],
+      ["Suburb median", moneyFull(m.suburb_median_value), "sample — needs CoreLogic feed", true],
+    ].filter(Boolean);
+
+    document.getElementById("value-stats").innerHTML = cards
+      .map(
+        ([k, v, src, sample]) =>
+          `<div class="stat${sample ? " sample-stat" : ""}">` +
+          `<span class="k">${k} ${sample ? '<span class="tag sample">sample</span>' : '<span class="tag real">real</span>'}</span>` +
+          `<span class="v">${v}</span><span class="src">${escapeHtml(src)}</span></div>`,
+      )
+      .join("");
+    document.getElementById("value-source").textContent = t.source;
+  } catch (err) {
+    document.getElementById("value-chart").innerHTML =
+      `<p class="chart-note">Could not load market data: ${escapeHtml(err.message)}</p>`;
+  }
+}
 
 document.getElementById("property-form").addEventListener("submit", (e) => {
   e.preventDefault();

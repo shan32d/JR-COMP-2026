@@ -150,6 +150,34 @@
     </details>
   </section>
 
+  <!-- ============ PROPERTY VALUE ============ -->
+  <section id="view-value" class="view">
+    <button class="back" data-view="view-portfolio">← Back to portfolio</button>
+    <h2>📈 Value &amp; market</h2>
+    <p class="hint" id="value-address">—</p>
+
+    <div class="data-notice">
+      <strong>Mixed data sources.</strong>
+      The owner-occupier and rental split is <span class="tag real">real</span> — ABS 2021 Census.
+      Value history, projection, auction clearance and suburb median are
+      <span class="tag sample">sample</span> — CoreLogic/RP Data and Domain are licensed feeds with no
+      open API, so these are illustrative only, not market data.
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>Value history &amp; projection</h3>
+        <span class="tag sample">sample</span>
+      </div>
+      <div id="value-chart"></div>
+      <p class="chart-note" id="value-method">—</p>
+    </div>
+
+    <h3 class="section-h">Suburb snapshot — <span id="value-suburb">—</span></h3>
+    <div class="stat-row" id="value-stats"></div>
+    <p class="chart-note" id="value-source">—</p>
+  </section>
+
   <!-- ============ LISTING ============ -->
   <section id="view-listing" class="view">
     <button class="back" data-view="view-home">← Back to the cycle</button>

@@ -125,6 +125,60 @@ main { max-width: 1060px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 }
 .row-remove:hover { background: #fdecea; color: #b3261e; }
 
+.value-link {
+  background: none; border: none; padding: 0; font: inherit;
+  color: var(--blue); font-weight: 600; cursor: pointer;
+  border-bottom: 1px dotted var(--blue);
+}
+.value-link:hover { color: #1f6fd8; }
+
+/* ---------- value & market ---------- */
+.data-notice {
+  background: #fff8e6;
+  border: 1px solid #f0d48a;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  margin: 0.75rem 0 1.25rem;
+}
+.tag {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: 1px;
+}
+.tag.real { background: #e6f8ef; color: #1d7a4e; }
+.tag.sample { background: #fdecea; color: #b3261e; }
+
+.chart-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfeff;
+  padding: 1rem 1.15rem;
+}
+.chart-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+.chart-head h3 { margin: 0; font-size: 1.02rem; }
+#value-chart svg { width: 100%; height: auto; display: block; }
+.chart-note { color: var(--muted); font-size: 0.85rem; margin: 0.6rem 0 0; }
+.section-h { margin: 1.5rem 0 0; font-size: 1.02rem; }
+
+.grid-line { stroke: #dfeef0; stroke-width: 1; }
+.axis-text { fill: #6b8a94; font-size: 11px; }
+.hist-line { fill: none; stroke: var(--blue); stroke-width: 3; stroke-linejoin: round; }
+.proj-line { fill: none; stroke: var(--green); stroke-width: 3; stroke-dasharray: 7 5; stroke-linejoin: round; }
+.hist-area { fill: rgba(58, 168, 196, 0.12); }
+.dot { fill: #fff; stroke: var(--blue); stroke-width: 2.5; }
+.dot.proj { stroke: var(--green); }
+.dot-label { fill: #2c4d57; font-size: 11px; font-weight: 600; text-anchor: middle; }
+.legend-text { fill: #6b8a94; font-size: 11.5px; }
+
+.stat.sample-stat { border-left-color: #e6a23c; }
+.stat .src { display: block; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
 .add-property { margin-top: 1.25rem; border-top: 1px solid var(--line); padding-top: 0.9rem; }
 .add-property summary {
   cursor: pointer; font-weight: 600; color: var(--teal); list-style: none;
@@ -162,7 +216,7 @@ main { max-width: 1060px; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
 
 /* ---------- feature panels ---------- */
-#view-portfolio, #view-listing, #view-inspect, #view-repair {
+#view-value, #view-portfolio, #view-listing, #view-inspect, #view-repair {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
