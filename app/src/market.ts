@@ -28,7 +28,10 @@ export interface SuburbTenure {
 }
 
 export interface ValuePoint {
+  /** "2026" for annual points, "2026 Q3" for quarterly. */
+  label: string;
   year: number;
+  quarter?: number;
   value: number;
   projected: boolean;
 }
@@ -38,6 +41,7 @@ export interface MarketReport {
   suburb: string;
   current_value: number;
   history: ValuePoint[];
+  history_quarterly: ValuePoint[];
   projection_method: string;
   cagr_pct: number;
   tenure: SuburbTenure;
@@ -171,9 +175,13 @@ export async function buildMarketReport(address: string, currentValue: number): 
     values.unshift(values[0] / (1 + yearlyGrowth[i]));
   }
 
+  const startYear = thisYear - (HISTORY_YEARS - 1);
+  const round = (v: number) => Math.round(v / 1000) * 1000;
+
   const history: ValuePoint[] = values.map((v, i) => ({
-    year: thisYear - (HISTORY_YEARS - 1) + i,
-    value: Math.round(v / 1000) * 1000,
+    label: String(startYear + i),
+    year: startYear + i,
+    value: round(v),
     projected: false,
   }));
 
@@ -184,8 +192,30 @@ export async function buildMarketReport(address: string, currentValue: number): 
   let running = last;
   for (let i = 1; i <= PROJECTION_YEARS; i++) {
     running *= 1 + cagr;
-    history.push({ year: thisYear + i, value: Math.round(running / 1000) * 1000, projected: true });
+    const year = thisYear + i;
+    history.push({ label: String(year), year, value: round(running), projected: true });
   }
+
+  // Quarterly view: interpolate between the annual points with a little
+  // seasonal wobble, so zooming in stays consistent with the annual series.
+  const quarterly: ValuePoint[] = [];
+  for (let i = 0; i < history.length - 1; i++) {
+    const from = history[i].value;
+    const to = history[i + 1].value;
+    for (let q = 0; q < 4; q++) {
+      const t = q / 4;
+      const wobble = 1 + (rand() - 0.5) * 0.012;
+      quarterly.push({
+        label: `${history[i].year} Q${q + 1}`,
+        year: history[i].year,
+        quarter: q + 1,
+        value: round((from + (to - from) * t) * wobble),
+        projected: history[i].projected,
+      });
+    }
+  }
+  const tail = history[history.length - 1];
+  quarterly.push({ label: `${tail.year} Q1`, year: tail.year, quarter: 1, value: tail.value, projected: tail.projected });
 
   const { suburb } = parseSuburb(address);
   return {
@@ -193,6 +223,7 @@ export async function buildMarketReport(address: string, currentValue: number): 
     suburb,
     current_value: currentValue,
     history,
+    history_quarterly: quarterly,
     cagr_pct: Math.round(cagr * 1000) / 10,
     projection_method: `Straight compounding of the ${HISTORY_YEARS}-year growth rate shown. Not a forecast.`,
     tenure: await fetchSuburbTenure(address),

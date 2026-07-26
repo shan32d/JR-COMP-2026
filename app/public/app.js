@@ -178,59 +178,157 @@ document.getElementById("portfolio-rows").addEventListener("click", async (e) =>
 });
 
 // ---------- Value & market panel ----------
-function drawValueChart(history) {
-  const W = 720, H = 300, PAD = { t: 28, r: 20, b: 34, l: 68 };
+let marketData = null;      // last /api/market response
+let outlookData = null;     // last /api/market/:id/outlook response
+let chartZoom = "annual";
+
+function drawValueChart() {
+  if (!marketData) return;
+  const series = chartZoom === "quarterly" ? marketData.history_quarterly : marketData.history;
+  const quarterly = chartZoom === "quarterly";
+  const W = 720, H = 310, PAD = { t: 30, r: 22, b: 40, l: 68 };
   const plotW = W - PAD.l - PAD.r, plotH = H - PAD.t - PAD.b;
-  const values = history.map((p) => p.value);
-  const min = Math.min(...values) * 0.94, max = Math.max(...values) * 1.06;
-  const x = (i) => PAD.l + (i / (history.length - 1)) * plotW;
+
+  const lastHistIdx = series.findIndex((p) => p.projected) - 1;
+  const anchor = series[lastHistIdx].value;
+
+  // If an AI outlook exists, its low/high define a cone from the last actual point.
+  const bandPts = [];
+  if (outlookData) {
+    const steps = series.length - 1 - lastHistIdx;
+    for (let s = 0; s <= steps; s++) {
+      const f = s / steps;
+      bandPts.push({
+        i: lastHistIdx + s,
+        low: anchor * (1 + (outlookData.low_pct / 100) * f),
+        high: anchor * (1 + (outlookData.high_pct / 100) * f),
+        base: anchor * (1 + (outlookData.base_pct / 100) * f),
+      });
+    }
+  }
+
+  const all = series.map((p) => p.value).concat(bandPts.flatMap((b) => [b.low, b.high]));
+  const min = Math.min(...all) * 0.94, max = Math.max(...all) * 1.06;
+  const x = (i) => PAD.l + (i / (series.length - 1)) * plotW;
   const y = (v) => PAD.t + plotH - ((v - min) / (max - min)) * plotH;
 
-  const lastHistIdx = history.findIndex((p) => p.projected) - 1;
-  const hist = history.slice(0, lastHistIdx + 1);
-  const proj = history.slice(lastHistIdx); // include the join point
-
+  const hist = series.slice(0, lastHistIdx + 1);
+  const proj = series.slice(lastHistIdx);
   const pts = (arr, offset) => arr.map((p, i) => `${x(i + offset)},${y(p.value)}`).join(" ");
   const gridVals = [0, 0.25, 0.5, 0.75, 1].map((f) => min + f * (max - min));
 
-  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Property value history and projection">
-    ${gridVals
-      .map(
-        (v) =>
-          `<line class="grid-line" x1="${PAD.l}" y1="${y(v)}" x2="${W - PAD.r}" y2="${y(v)}" />` +
-          `<text class="axis-text" x="${PAD.l - 8}" y="${y(v) + 4}" text-anchor="end">${money(Math.round(v))}</text>`,
-      )
-      .join("")}
-    <polygon class="hist-area" points="${x(0)},${PAD.t + plotH} ${pts(hist, 0)} ${x(lastHistIdx)},${PAD.t + plotH}" />
-    <polyline class="hist-line" points="${pts(hist, 0)}" />
-    <polyline class="proj-line" points="${pts(proj, lastHistIdx)}" />
-    ${history
-      .map(
-        (p, i) =>
-          `<circle class="dot${p.projected ? " proj" : ""}" cx="${x(i)}" cy="${y(p.value)}" r="4" />` +
-          `<text class="axis-text" x="${x(i)}" y="${H - 12}" text-anchor="middle">${p.year}</text>`,
-      )
-      .join("")}
-    <text class="dot-label" x="${x(lastHistIdx)}" y="${y(history[lastHistIdx].value) - 12}">${money(history[lastHistIdx].value)}</text>
-    <text class="dot-label" x="${x(history.length - 1)}" y="${y(history[history.length - 1].value) - 12}">${money(history[history.length - 1].value)}</text>
-    <line class="hist-line" x1="${W - 250}" y1="14" x2="${W - 228}" y2="14" />
-    <text class="legend-text" x="${W - 222}" y="18">history</text>
-    <line class="proj-line" x1="${W - 160}" y1="14" x2="${W - 138}" y2="14" />
-    <text class="legend-text" x="${W - 132}" y="18">projection</text>
-  </svg>`;
-  document.getElementById("value-chart").innerHTML = svg;
+  // Label every year in quarterly mode rather than all 30+ quarters.
+  const showLabel = (p, i) =>
+    quarterly ? p.quarter === 1 : true;
+
+  const band = bandPts.length
+    ? `<polygon class="band" points="${bandPts.map((b) => `${x(b.i)},${y(b.high)}`).join(" ")} ${[...bandPts].reverse().map((b) => `${x(b.i)},${y(b.low)}`).join(" ")}" />
+       <polyline class="band-line" points="${bandPts.map((b) => `${x(b.i)},${y(b.high)}`).join(" ")}" />
+       <polyline class="band-line" points="${bandPts.map((b) => `${x(b.i)},${y(b.low)}`).join(" ")}" />`
+    : "";
+
+  document.getElementById("value-chart").innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Property value history and projection">
+      ${gridVals
+        .map(
+          (v) =>
+            `<line class="grid-line" x1="${PAD.l}" y1="${y(v)}" x2="${W - PAD.r}" y2="${y(v)}" />` +
+            `<text class="axis-text" x="${PAD.l - 8}" y="${y(v) + 4}" text-anchor="end">${money(Math.round(v))}</text>`,
+        )
+        .join("")}
+      ${band}
+      <polygon class="hist-area" points="${x(0)},${PAD.t + plotH} ${pts(hist, 0)} ${x(lastHistIdx)},${PAD.t + plotH}" />
+      <polyline class="hist-line" points="${pts(hist, 0)}" />
+      <polyline class="proj-line" points="${pts(proj, lastHistIdx)}" />
+      ${series
+        .map(
+          (p, i) =>
+            (quarterly && !p.projected && p.quarter !== 1
+              ? ""
+              : `<circle class="dot${p.projected ? " proj" : ""}" cx="${x(i)}" cy="${y(p.value)}" r="${quarterly ? 3 : 4}" />`) +
+            (showLabel(p, i)
+              ? `<text class="axis-text" x="${x(i)}" y="${H - 14}" text-anchor="middle">${p.year}</text>`
+              : ""),
+        )
+        .join("")}
+      <title>${series.map((p) => `${p.label}: ${moneyFull(p.value)}`).join("\n")}</title>
+      <text class="dot-label" x="${x(lastHistIdx)}" y="${y(anchor) - 12}">${money(anchor)}</text>
+      <line class="hist-line" x1="${W - 260}" y1="14" x2="${W - 238}" y2="14" />
+      <text class="legend-text" x="${W - 232}" y="18">history</text>
+      <line class="proj-line" x1="${W - 175}" y1="14" x2="${W - 153}" y2="14" />
+      <text class="legend-text" x="${W - 147}" y="18">trend</text>
+      ${outlookData ? `<rect class="band" x="${W - 100}" y="8" width="20" height="12" /><text class="legend-text" x="${W - 76}" y="18">AI range</text>` : ""}
+    </svg>`;
 }
+
+document.querySelectorAll(".zoom").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".zoom").forEach((b) => b.classList.toggle("active", b === btn));
+    chartZoom = btn.dataset.zoom;
+    drawValueChart();
+  });
+});
+
+// --- AI outlook: web search -> ranged projection + factors + articles ---
+document.getElementById("outlook-btn").addEventListener("click", () => {
+  if (!marketData) return;
+  runAction(document.getElementById("outlook-btn"), "outlook-error", async () => {
+    const res = await fetch("/api/market/" + marketData.id + "/outlook");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Outlook failed.");
+    outlookData = data;
+
+    const v = marketData.current_value;
+    const card = (k, pct, cls) =>
+      `<div class="range-card ${cls}"><span class="k">${k}</span>` +
+      `<span class="v">${pct > 0 ? "+" : ""}${pct}%</span>` +
+      `<span class="sub">${moneyFull(Math.round((v * (1 + pct / 100)) / 1000) * 1000)}</span></div>`;
+    document.getElementById("outlook-range").innerHTML =
+      card("Weak case", data.low_pct, "") + card("Base case", data.base_pct, "base") + card("Strong case", data.high_pct, "");
+
+    document.getElementById("outlook-summary").textContent =
+      data.summary + `  (Confidence: ${data.confidence}. Horizon: ${data.horizon_years} years.)`;
+
+    const arrow = { upward: "▲", downward: "▼", mixed: "◆" };
+    document.getElementById("outlook-factors").innerHTML = data.factors
+      .map(
+        (f) =>
+          `<div class="factor"><span class="arrow ${f.direction}">${arrow[f.direction]}</span>` +
+          `<span class="body"><strong>${escapeHtml(f.factor)}</strong><span>${escapeHtml(f.explanation)}</span></span></div>`,
+      )
+      .join("");
+
+    document.getElementById("outlook-sources").innerHTML = data.sources.length
+      ? data.sources
+          .map((s) => {
+            let host = s.url;
+            try { host = new URL(s.url).hostname.replace(/^www\./, ""); } catch {}
+            return `<a class="news-card" href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">` +
+              `${escapeHtml(s.title)}<span class="host">${escapeHtml(host)} ↗</span></a>`;
+          })
+          .join("")
+      : `<p class="chart-note">No articles were returned by the search.</p>`;
+
+    document.getElementById("outlook-result").classList.remove("hidden");
+    drawValueChart(); // redraw with the range cone
+  });
+});
 
 async function openMarket(id) {
   showView("view-value");
   document.getElementById("value-chart").innerHTML =
     `<p class="chart-note">Loading market data…</p>`;
   document.getElementById("value-stats").innerHTML = "";
+  document.getElementById("outlook-result").classList.add("hidden");
+  document.getElementById("outlook-error").textContent = "";
+  outlookData = null;
   try {
     const m = await (await fetch("/api/market/" + id)).json();
+    m.id = id;
+    marketData = m;
     document.getElementById("value-address").textContent = m.address;
     document.getElementById("value-suburb").textContent = m.tenure.matched_sa2 || m.suburb;
-    drawValueChart(m.history);
+    drawValueChart();
     document.getElementById("value-method").textContent =
       `Growth shown: ${m.cagr_pct}% a year. ${m.projection_method}`;
 
@@ -433,6 +531,26 @@ document.getElementById("listing-regen").addEventListener("click", () => {
 const getEntryUrls = wireUploads("entry-files", "entry-thumbs", "inspect-error");
 const getCurrentUrls = wireUploads("current-files", "current-thumbs", "inspect-error");
 
+// One render path for both a live run and the cached example, so the demo can
+// never drift from what a real report looks like.
+function renderInspection(data, entryUrls, currentUrls, { example = false } = {}) {
+  document.getElementById("inspect-example-note").classList.toggle("hidden", !example);
+  document.getElementById("inspect-summary").textContent = data.summary;
+  document.querySelector("#inspect-table tbody").innerHTML = data.findings
+    .map(
+      (f) =>
+        `<tr><td>${escapeHtml(f.area)}</td>` +
+        `<td><span class="badge ${f.status}">${f.status.replace(/_/g, " ")}</span></td>` +
+        `<td>${escapeHtml(f.details)}</td></tr>`,
+    )
+    .join("");
+  document.getElementById("inspect-result").classList.remove("hidden");
+
+  // Same response, second reading of it: one element per page, photos ringed.
+  loadWalkthrough(data.findings, entryUrls, currentUrls);
+  renderTenantProfile(data.tenant_profile);
+}
+
 document.getElementById("inspect-btn").addEventListener("click", () => {
   const entry = getEntryUrls();
   const current = getCurrentUrls();
@@ -444,18 +562,278 @@ document.getElementById("inspect-btn").addEventListener("click", () => {
       entry_photo_urls: entry,
       current_photo_urls: current,
     });
-    document.getElementById("inspect-summary").textContent = data.summary;
-    const tbody = document.querySelector("#inspect-table tbody");
-    tbody.innerHTML = data.findings
-      .map(
-        (f) =>
-          `<tr><td>${escapeHtml(f.area)}</td>` +
-          `<td><span class="badge ${f.status}">${f.status.replace(/_/g, " ")}</span></td>` +
-          `<td>${escapeHtml(f.details)}</td></tr>`,
-      )
-      .join("");
-    document.getElementById("inspect-result").classList.remove("hidden");
+    renderInspection(data, entry, current);
   });
+});
+
+// Cached report — served from disk, no model call, so this stays instant.
+document.getElementById("inspect-example").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  const errorEl = document.getElementById("inspect-error");
+  errorEl.textContent = "";
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/inspect/example");
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(payload.error || "Could not load the example report.");
+    renderInspection(payload.result, payload.entry_photo_urls, payload.current_photo_urls, { example: true });
+  } catch (err) {
+    errorEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ---------- tenant portrait + room-use radar ----------
+// Six axes, all scored 0-10 with 10 best, so one radial scale reads cleanly.
+const RADAR_AXES = [
+  ["cleanliness", "Cleanliness"],
+  ["upkeep", "Upkeep"],
+  ["surface_care", "Surface care"],
+  ["tidiness", "Tidiness"],
+  ["fixture_care", "Fixtures"],
+  ["damage_free", "Damage-free"],
+];
+
+const RADAR = { cx: 165, cy: 158, r: 108, max: 10 };
+
+// Axis i of the hexagon, starting at the top and going clockwise, at a raw
+// distance from the centre. Labels sit past the outer ring, so this must not
+// clamp — only radarPoint(), which plots data, does.
+function pointAt(i, dist) {
+  const angle = -Math.PI / 2 + (i * Math.PI) / 3;
+  return [RADAR.cx + dist * Math.cos(angle), RADAR.cy + dist * Math.sin(angle)];
+}
+
+function radarPoint(i, value) {
+  return pointAt(i, (Math.max(0, Math.min(value, RADAR.max)) / RADAR.max) * RADAR.r);
+}
+
+function hexPath(radius) {
+  return RADAR_AXES.map((_, i) => pointAt(i, radius).map((n) => n.toFixed(1)).join(",")).join(" ");
+}
+
+function radarSvg(ratings) {
+  // rings at 2/4/6/8/10 give the reader a scale without numbering every vertex
+  const rings = [0.2, 0.4, 0.6, 0.8, 1]
+    .map((f) => `<polygon class="tp-ring" points="${hexPath(RADAR.r * f)}" />`)
+    .join("");
+  const spokes = RADAR_AXES.map((_, i) => {
+    const [x, y] = pointAt(i, RADAR.r);
+    return `<line class="tp-spoke" x1="${RADAR.cx}" y1="${RADAR.cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" />`;
+  }).join("");
+
+  const area = RADAR_AXES.map(([key], i) => radarPoint(i, ratings[key] ?? 0).map((n) => n.toFixed(1)).join(","))
+    .join(" ");
+
+  // Mouse-only hover targets. SVG elements take focus without firing focus
+  // events in some engines, so a tab stop here would be a dead affordance —
+  // the always-visible score table is the keyboard and screen-reader path.
+  const nodes = RADAR_AXES.map(([key, label], i) => {
+    const v = ratings[key] ?? 0;
+    const [x, y] = radarPoint(i, v);
+    return (
+      `<circle class="tp-hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16" aria-hidden="true" ` +
+      `data-axis="${escapeHtml(label)}" data-score="${v}"></circle>` +
+      `<circle class="tp-node" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" />`
+    );
+  }).join("");
+
+  const labels = RADAR_AXES.map(([, label], i) => {
+    const [x, y] = pointAt(i, RADAR.r * 1.26);
+    // keep the left/right labels off the plot instead of overlapping it
+    const anchor = x < RADAR.cx - 6 ? "end" : x > RADAR.cx + 6 ? "start" : "middle";
+    const dy = y < RADAR.cy - 6 ? "-0.2em" : y > RADAR.cy + 6 ? "0.9em" : "0.32em";
+    return `<text class="tp-axis-label" x="${x.toFixed(1)}" y="${y.toFixed(1)}" dy="${dy}" text-anchor="${anchor}">${escapeHtml(label)}</text>`;
+  }).join("");
+
+  // the viewBox is padded well past the plot so the longest axis label has room
+  // to sit outside the hexagon instead of being clipped at the edge
+  return (
+    `<svg viewBox="-60 -10 450 336" role="img" aria-label="Room use rating across six axes, each scored out of 10">` +
+    rings + spokes + `<polygon class="tp-area" points="${area}" />` + nodes + labels +
+    `</svg>`
+  );
+}
+
+function renderTenantProfile(profile) {
+  const panel = document.getElementById("tenant-panel");
+  if (!profile) {
+    panel.classList.add("hidden");
+    return;
+  }
+  panel.classList.remove("hidden");
+
+  document.getElementById("tp-headline").textContent = profile.headline || "";
+  document.getElementById("tp-roomuse").textContent = profile.room_use || "";
+
+  const conf = document.getElementById("tp-confidence");
+  conf.textContent = `${profile.confidence || "low"} confidence`;
+  conf.className = `tp-confidence ${profile.confidence || "low"}`;
+
+  const ratings = profile.ratings || {};
+  document.getElementById("tp-radar").innerHTML = radarSvg(ratings);
+
+  const values = RADAR_AXES.map(([key]) => Number(ratings[key]) || 0);
+  document.getElementById("tp-mean-val").textContent =
+    (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+
+  // the table carries every value, so the plot itself stays unnumbered
+  document.getElementById("tp-scores-body").innerHTML = RADAR_AXES.map(
+    ([key, label]) => `<tr><td>${escapeHtml(label)}</td><td>${Number(ratings[key]) || 0}</td></tr>`,
+  ).join("");
+
+  document.getElementById("tp-traits").innerHTML = (profile.traits || [])
+    .map(
+      (t) =>
+        `<li><span class="t">${escapeHtml(t.trait)}</span><span class="e">${escapeHtml(t.evidence)}</span></li>`,
+    )
+    .join("");
+  document.getElementById("tp-tip").textContent = "";
+}
+
+// hover / focus readout for the radar vertices
+const tpRadar = document.getElementById("tp-radar");
+const tpTip = document.getElementById("tp-tip");
+function showRadarTip(e) {
+  const hit = e.target.closest(".tp-hit");
+  tpTip.innerHTML = hit
+    ? `<strong>${escapeHtml(hit.dataset.axis)}</strong> — ${escapeHtml(hit.dataset.score)} / 10`
+    : "";
+}
+tpRadar.addEventListener("mouseover", showRadarTip);
+tpRadar.addEventListener("mouseout", () => (tpTip.textContent = ""));
+
+// ---------- finding walkthrough (before | verdict | after, one element a page) ----------
+const fm = {
+  el: document.getElementById("finding-modal"),
+  findings: [],
+  entryUrls: [],
+  currentUrls: [],
+  i: 0,
+  lastFocus: null,
+};
+
+function loadWalkthrough(findings, entryUrls, currentUrls) {
+  fm.findings = findings || [];
+  fm.entryUrls = entryUrls;
+  fm.currentUrls = currentUrls;
+  const btn = document.getElementById("inspect-walkthrough");
+  btn.classList.toggle("hidden", fm.findings.length === 0);
+  btn.textContent = `🔍 Walk through ${fm.findings.length} finding${fm.findings.length === 1 ? "" : "s"}`;
+  if (fm.findings.length > 0) openWalkthrough(0);
+}
+
+// A 1-based photo number from the model, or 0/out-of-range when that side has
+// no matching photo.
+function photoAt(urls, n) {
+  return Number.isInteger(n) && n >= 1 && n <= urls.length ? urls[n - 1] : null;
+}
+
+// Region boxes are in a 0-1000 grid; the overlay is stretched onto the photo
+// box, so the same numbers work whatever the photo's real dimensions are.
+function ringSvg(region, status) {
+  if (!region) return "";
+  const x0 = Math.min(region.x0, region.x1);
+  const x1 = Math.max(region.x0, region.x1);
+  const y0 = Math.min(region.y0, region.y1);
+  const y1 = Math.max(region.y0, region.y1);
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  // pad a little so the ring sits around the element, not across it
+  const rx = Math.min(Math.max((x1 - x0) / 2, 45) * 1.15, 495);
+  const ry = Math.min(Math.max((y1 - y0) / 2, 45) * 1.15, 495);
+  const ellipse = (cls) =>
+    `<ellipse class="fm-ring ${cls}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" />`;
+  return (
+    `<svg viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">` +
+    ellipse("halo") +
+    ellipse(status) +
+    `</svg>`
+  );
+}
+
+function paneHtml(url, region, status, emptyText) {
+  if (!url) return `<div class="fm-noimg">${escapeHtml(emptyText)}</div>`;
+  return (
+    `<div class="fm-fig"><img src="${escapeHtml(url)}" alt="" />` + ringSvg(region, status) + `</div>`
+  );
+}
+
+function renderWalkthrough() {
+  const f = fm.findings[fm.i];
+  if (!f) return;
+  const passes = f.status !== "damage";
+
+  document.getElementById("fm-area").textContent = f.area;
+  const badge = document.getElementById("fm-badge");
+  badge.textContent = f.status.replace(/_/g, " ");
+  badge.className = `badge ${f.status}`;
+
+  const verdict = document.getElementById("fm-verdict");
+  verdict.textContent = passes ? "✓ Passes inspection" : "✕ Does not pass";
+  verdict.className = `fm-verdict ${passes ? "pass" : "fail"}`;
+  // straight from the report — no extra model call
+  document.getElementById("fm-sentence").textContent = f.verdict_sentence || f.details;
+
+  document.getElementById("fm-before").innerHTML = paneHtml(
+    photoAt(fm.entryUrls, f.entry_photo), f.entry_region, f.status,
+    "No entry photo covers this element — comparison is limited.",
+  );
+  document.getElementById("fm-after").innerHTML = paneHtml(
+    photoAt(fm.currentUrls, f.current_photo), f.current_region, f.status,
+    "No current photo covers this element — comparison is limited.",
+  );
+
+  document.getElementById("fm-count").textContent = `${fm.i + 1} of ${fm.findings.length}`;
+  document.getElementById("fm-prev").disabled = fm.i === 0;
+  document.getElementById("fm-next").disabled = fm.i === fm.findings.length - 1;
+  document.getElementById("fm-dots").innerHTML = fm.findings
+    .map(
+      (d, n) =>
+        `<button class="fm-dot ${d.status} ${n === fm.i ? "active" : ""}" data-fm-go="${n}" ` +
+        `title="${escapeHtml(d.area)}" aria-label="Finding ${n + 1}: ${escapeHtml(d.area)}"></button>`,
+    )
+    .join("");
+}
+
+function openWalkthrough(index) {
+  if (fm.findings.length === 0) return;
+  fm.i = Math.min(Math.max(index, 0), fm.findings.length - 1);
+  fm.lastFocus = document.activeElement;
+  fm.el.classList.remove("hidden");
+  renderWalkthrough();
+  document.getElementById("fm-next").focus();
+}
+
+function closeWalkthrough() {
+  fm.el.classList.add("hidden");
+  if (fm.lastFocus) fm.lastFocus.focus();
+}
+
+function stepWalkthrough(delta) {
+  const next = fm.i + delta;
+  if (next < 0 || next >= fm.findings.length) return;
+  fm.i = next;
+  renderWalkthrough();
+}
+
+document.getElementById("inspect-walkthrough").addEventListener("click", () => openWalkthrough(0));
+document.getElementById("fm-prev").addEventListener("click", () => stepWalkthrough(-1));
+document.getElementById("fm-next").addEventListener("click", () => stepWalkthrough(1));
+fm.el.addEventListener("click", (e) => {
+  if (e.target.closest("[data-fm-close]")) closeWalkthrough();
+  const dot = e.target.closest("[data-fm-go]");
+  if (dot) {
+    fm.i = Number(dot.dataset.fmGo);
+    renderWalkthrough();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (fm.el.classList.contains("hidden")) return;
+  if (e.key === "Escape") closeWalkthrough();
+  else if (e.key === "ArrowLeft") stepWalkthrough(-1);
+  else if (e.key === "ArrowRight") stepWalkthrough(1);
 });
 
 // ---------- Repair Verification ----------

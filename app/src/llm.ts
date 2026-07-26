@@ -169,6 +169,82 @@ export async function generateStructured<S extends z4.ZodType>(opts: {
   return structuredCall({ ...opts, content: opts.prompt });
 }
 
+export interface SearchSource {
+  title: string;
+  url: string;
+}
+
+function collectSources(content: Anthropic.Messages.ContentBlock[], into: SearchSource[]): void {
+  for (const block of content) {
+    if (block.type !== "web_search_tool_result") continue;
+    const results = block.content;
+    if (!Array.isArray(results)) continue; // error object rather than results
+    for (const r of results) {
+      if (r.type === "web_search_result" && !into.some((s) => s.url === r.url)) {
+        into.push({ title: r.title, url: r.url });
+      }
+    }
+  }
+}
+
+/**
+ * Structured output backed by Anthropic's server-side web search, so the model
+ * reasons over current articles rather than training data. Returns the parsed
+ * result plus the sources it actually read, for citation in the UI.
+ */
+export async function generateStructuredWithSearch<S extends z4.ZodType>(opts: {
+  system: string;
+  prompt: string;
+  schema: S;
+  maxTokens: number;
+  maxSearches?: number;
+  effort?: "low" | "medium" | "high";
+  timeoutMs?: number;
+}): Promise<{ data: z4.infer<S>; sources: SearchSource[] }> {
+  const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: opts.prompt }];
+  const sources: SearchSource[] = [];
+  let final: Anthropic.Messages.Message | undefined;
+
+  try {
+    // Server-tool turns can stop with pause_turn; re-send to let them continue.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const response = await client().messages.create(
+        {
+          model: MODEL,
+          max_tokens: opts.maxTokens,
+          system: opts.system,
+          messages,
+          tools: [
+            { type: "web_search_20260209", name: "web_search", max_uses: opts.maxSearches ?? 4 },
+          ],
+          output_config: {
+            format: zodOutputFormat(opts.schema),
+            effort: opts.effort ?? "medium",
+          },
+        },
+        { timeout: opts.timeoutMs ?? 180_000 },
+      );
+      collectSources(response.content, sources);
+      if (response.stop_reason !== "pause_turn") {
+        final = response;
+        break;
+      }
+      messages.push({ role: "assistant", content: response.content });
+    }
+
+    if (!final) throw new LlmError("truncated", "The research step did not finish. Please try again.");
+    checkStopReason(final);
+    const text = final.content.find((b) => b.type === "text");
+    if (!text) throw new LlmError("bad_output", "The AI returned no analysis.");
+    return { data: opts.schema.parse(JSON.parse(text.text)) as z4.infer<S>, sources };
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      throw new LlmError("bad_output", "The AI returned an unparseable analysis.");
+    }
+    throw mapError(err);
+  }
+}
+
 export async function generateVision<S extends z4.ZodType>(opts: {
   system: string;
   parts: VisionPart[];

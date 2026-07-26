@@ -14,7 +14,9 @@ import {
   removeProperty,
   summarise,
 } from "./portfolio.js";
-import { buildMarketReport } from "./market.js";
+import { buildMarketReport, fetchSuburbTenure, parseSuburb } from "./market.js";
+import { generateStructuredWithSearch } from "./llm.js";
+import { OUTLOOK_SYSTEM, buildOutlookPrompt, outlookSchema, type Outlook } from "./prompts/outlook.js";
 import { descriptionField, photoUrlList, singlePhotoUrl, parseOrThrow, ValidationError } from "./validation.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -92,6 +94,24 @@ app.post("/api/inspect", async (req, res) => {
   }
 });
 
+// Pre-generated report for the "see an example" button, so the demo path costs
+// nothing and always renders. Regenerate with `npm run build:example`.
+const examplePath = path.resolve(here, "..", "fixtures", "example-inspection.json");
+if (!existsSync(examplePath)) {
+  console.warn("No example inspection fixture — run `npm run build:example`.");
+}
+
+// Read per request rather than at boot: it is 12 KB off local disk, and it means
+// `npm run build:example` takes effect without restarting the server.
+app.get("/api/inspect/example", (_req, res) => {
+  if (!existsSync(examplePath)) {
+    res.status(503).json({ error: "The example report has not been generated yet." });
+    return;
+  }
+  res.setHeader("Content-Type", "application/json");
+  res.send(readFileSync(examplePath, "utf8"));
+});
+
 const repairRequest = z.object({
   before_photo_url: singlePhotoUrl,
   after_photo_url: singlePhotoUrl,
@@ -128,6 +148,67 @@ app.get("/api/market/:id", async (req, res) => {
       return;
     }
     res.json(await buildMarketReport(property.address, property.value));
+  } catch (err) {
+    handleError(err, res);
+  }
+});
+
+/**
+ * Occasionally the model skips the search and fills the schema with junk
+ * (empty summary, a nonsensical range). Catch that and retry rather than
+ * showing a manager fabricated numbers.
+ */
+function outlookLooksSound(o: Outlook, sources: { url: string }[]): boolean {
+  return (
+    sources.length > 0 &&
+    o.low_pct <= o.base_pct &&
+    o.base_pct <= o.high_pct &&
+    o.low_pct >= -80 &&
+    o.high_pct <= 200 &&
+    o.summary.trim().length > 80 &&
+    o.factors.length >= 2
+  );
+}
+
+/** Slow (~60-90s): researches current reporting, then produces a ranged outlook. */
+app.get("/api/market/:id/outlook", async (req, res) => {
+  try {
+    const property = listProperties().find((p) => p.id === req.params.id);
+    if (!property) {
+      res.status(404).json({ error: "Property not found." });
+      return;
+    }
+    const tenure = await fetchSuburbTenure(property.address);
+    const prompt = buildOutlookPrompt({
+      address: property.address,
+      suburb: tenure.matched_sa2 ?? parseSuburb(property.address).suburb,
+      currentValue: property.value,
+      ownerOccupierPct: tenure.owner_occupier_pct,
+      rentedPct: tenure.rented_pct,
+    });
+
+    let last: { data: Outlook; sources: { title: string; url: string }[] } | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      last = await generateStructuredWithSearch({
+        system: OUTLOOK_SYSTEM,
+        prompt,
+        schema: outlookSchema,
+        maxTokens: 10_000,
+        maxSearches: 8,
+        effort: "medium",
+        timeoutMs: 150_000,
+      });
+      if (outlookLooksSound(last.data, last.sources)) break;
+      console.warn(`Outlook attempt ${attempt + 1} looked unsound (sources=${last.sources.length}); retrying.`);
+    }
+
+    if (!last || !outlookLooksSound(last.data, last.sources)) {
+      res.status(502).json({
+        error: "Could not produce a grounded outlook from current reporting. Please try again.",
+      });
+      return;
+    }
+    res.json({ ...last.data, sources: last.sources.slice(0, 12), current_value: property.value });
   } catch (err) {
     handleError(err, res);
   }
@@ -178,5 +259,7 @@ const server = app.listen(port, () => {
   console.log(`  Web app:      http://localhost:${port}`);
   console.log(`  MCP endpoint: http://localhost:${port}/mcp`);
 });
-// Vision requests can take a while; keep the HTTP timeout above the LLM timeout.
-server.requestTimeout = 120_000;
+// Vision and web-search requests take a while; keep the HTTP timeouts above the
+// LLM timeouts so Express never cuts a request short.
+server.requestTimeout = 360_000;
+server.headersTimeout = 370_000;

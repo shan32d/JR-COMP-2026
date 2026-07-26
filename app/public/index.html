@@ -168,9 +168,38 @@
       <div class="chart-head">
         <h3>Value history &amp; projection</h3>
         <span class="tag sample">sample</span>
+        <div class="zoom-toggle" role="group" aria-label="Chart resolution">
+          <button type="button" class="zoom active" data-zoom="annual">Annual</button>
+          <button type="button" class="zoom" data-zoom="quarterly">Quarterly</button>
+        </div>
       </div>
       <div id="value-chart"></div>
       <p class="chart-note" id="value-method">—</p>
+    </div>
+
+    <div class="outlook-card">
+      <div class="chart-head">
+        <h3>AI market outlook</h3>
+        <span class="tag real">live web search</span>
+      </div>
+      <p class="hint" id="outlook-intro">
+        Claude searches current reporting on interest rates, the housing market and this suburb,
+        then explains a three-year range and what would move it.
+      </p>
+      <button type="button" class="primary" id="outlook-btn">Research this market</button>
+      <div class="field-error" id="outlook-error"></div>
+      <div id="outlook-result" class="hidden">
+        <div class="range-row" id="outlook-range"></div>
+        <p class="outlook-summary" id="outlook-summary"></p>
+        <h4 class="section-h">What's driving it</h4>
+        <div id="outlook-factors"></div>
+        <h4 class="section-h">Articles used</h4>
+        <div class="news-grid" id="outlook-sources"></div>
+        <p class="disclaimer">
+          ⚠️ Market commentary generated from public reporting to inform your own judgement.
+          It is not financial advice, not a valuation, and not a guarantee of future value.
+        </p>
+      </div>
     </div>
 
     <h3 class="section-h">Suburb snapshot — <span id="value-suburb">—</span></h3>
@@ -317,16 +346,95 @@
       </div>
     </div>
     <div class="field-error" id="inspect-error"></div>
-    <button id="inspect-btn" class="primary">Generate Inspection Report</button>
+    <div class="inspect-actions">
+      <button id="inspect-btn" class="primary">Generate Inspection Report</button>
+      <button id="inspect-example" class="ghost">✨ See an example — no upload needed</button>
+    </div>
     <div id="inspect-result" class="result hidden">
       <h3>Inspection report</h3>
+      <p id="inspect-example-note" class="example-note hidden">
+        Example report, generated once from a sample before/after pair and saved. Nothing was sent to the AI just now —
+        upload your own photos above for a live run.
+      </p>
       <p id="inspect-summary" class="summary"></p>
+      <button id="inspect-walkthrough" class="ghost">🔍 Walk through findings</button>
       <table id="inspect-table">
         <thead><tr><th>Area</th><th>Status</th><th>Details</th></tr></thead>
         <tbody></tbody>
       </table>
+
+      <!-- inferred occupant portrait + how the room was used -->
+      <section id="tenant-panel" class="tenant-panel hidden" aria-labelledby="tp-title">
+        <div class="tp-head">
+          <h3 id="tp-title">👤 How the space was lived in</h3>
+          <span id="tp-confidence" class="tp-confidence"></span>
+        </div>
+        <p class="tp-caveat">
+          Inferred from the photos, not a record of fact. Read it as a prompt for what to look at —
+          not as grounds for a bond claim or a reference on the tenant.
+        </p>
+
+        <p id="tp-headline" class="tp-headline"></p>
+        <p id="tp-roomuse" class="tp-roomuse"></p>
+
+        <div class="tp-grid">
+          <figure class="tp-chart">
+            <figcaption>Room use rating <span class="sub">10 = best on every axis</span></figcaption>
+            <div id="tp-radar" class="tp-radar"></div>
+            <div id="tp-tip" class="tp-tip" role="status" aria-live="polite"></div>
+          </figure>
+
+          <div class="tp-side">
+            <p class="tp-mean"><span id="tp-mean-val"></span><span class="tp-mean-unit"> / 10 average</span></p>
+            <table class="tp-scores">
+              <caption class="sr-only">Room use ratings, 0 to 10</caption>
+              <thead><tr><th scope="col">Axis</th><th scope="col">Score</th></tr></thead>
+              <tbody id="tp-scores-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h4 class="tp-traits-title">What the photos suggest</h4>
+        <ul id="tp-traits" class="tp-traits"></ul>
+      </section>
     </div>
   </section>
+
+  <!-- ============ FINDING WALKTHROUGH (one element per page) ============ -->
+  <div id="finding-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fm-area">
+    <div class="modal-backdrop" data-fm-close></div>
+    <div class="modal-card">
+      <header class="fm-head">
+        <h3 id="fm-area"></h3>
+        <span id="fm-badge" class="badge"></span>
+        <button class="fm-close" data-fm-close aria-label="Close walkthrough">×</button>
+      </header>
+
+      <div class="fm-body">
+        <figure class="fm-pane">
+          <figcaption>Before <span class="sub">entry photo</span></figcaption>
+          <div class="fm-slot" id="fm-before"></div>
+        </figure>
+
+        <div class="fm-mid">
+          <p id="fm-verdict" class="fm-verdict"></p>
+          <p id="fm-sentence" class="fm-sentence"></p>
+        </div>
+
+        <figure class="fm-pane">
+          <figcaption>After <span class="sub">current photo</span></figcaption>
+          <div class="fm-slot" id="fm-after"></div>
+        </figure>
+      </div>
+
+      <footer class="fm-nav">
+        <button id="fm-prev" class="ghost">← Previous</button>
+        <div id="fm-dots" class="fm-dots"></div>
+        <span id="fm-count" class="fm-count"></span>
+        <button id="fm-next" class="ghost">Next →</button>
+      </footer>
+    </div>
+  </div>
 
   <!-- ============ MAINTENANCE ============ -->
   <section id="view-repair" class="view">

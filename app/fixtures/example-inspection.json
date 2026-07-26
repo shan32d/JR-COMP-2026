@@ -1,0 +1,269 @@
+{
+  "generated_at": "2026-07-26T05:40:23.583Z",
+  "entry_photo_urls": [
+    "/examples/before.png"
+  ],
+  "current_photo_urls": [
+    "/examples/after.png"
+  ],
+  "result": {
+    "findings": [
+      {
+        "area": "Ceiling light fitting (pendant/chandelier)",
+        "status": "damage",
+        "details": "The entry photo shows a beaded pendant chandelier centred above the play area. In the current photo the same ceiling zone above the window is bare, with no fitting or canopy visible. Framing is slightly tighter at the top, so absence should be confirmed on site, but on the images the fixture appears to have been removed.",
+        "verdict_sentence": "Does not pass — the pendant light present at entry is not visible in the current photo and appears to have been removed.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 230,
+          "y0": 0,
+          "x1": 350,
+          "y1": 50
+        },
+        "current_region": {
+          "x0": 230,
+          "y0": 0,
+          "x1": 370,
+          "y1": 45
+        }
+      },
+      {
+        "area": "Chalkboard easel (left of window)",
+        "status": "damage",
+        "details": "At entry the timber easel stood upright and square on its own legs with chalk and supplies on the tray. In the current photo the same easel is tilted hard against the left wall with the board slipped out of alignment and the tray empty, indicating the frame is no longer standing as intended.",
+        "verdict_sentence": "Does not pass — the easel that stood upright at entry is now leaning against the wall with the board out of its frame.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 60,
+          "y0": 110,
+          "x1": 210,
+          "y1": 340
+        },
+        "current_region": {
+          "x0": 0,
+          "y0": 215,
+          "x1": 180,
+          "y1": 615
+        }
+      },
+      {
+        "area": "Timber-look floor, centre of room",
+        "status": "unchanged",
+        "details": "The patterned area rug that covered the centre of the floor at entry has been taken up, exposing the boards beneath. Within the low light of the current photo the boards read as continuous and unmarked, with no gouges, water staining or lifted edges visible, though the heavy scatter of toys obscures parts of the surface.",
+        "verdict_sentence": "Passes — the exposed floorboards show no visible scratching, staining or lifting, only obscuring clutter on top.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 90,
+          "y0": 620,
+          "x1": 800,
+          "y1": 1000
+        },
+        "current_region": {
+          "x0": 60,
+          "y0": 650,
+          "x1": 820,
+          "y1": 1000
+        }
+      },
+      {
+        "area": "Floor, right-hand side near storage unit",
+        "status": "unchanged",
+        "details": "This strip of boarding was exposed in both sets. Comparing entry and current, the plank joints and finish look consistent with no new chips, dents or dragging marks in front of the storage unit.",
+        "verdict_sentence": "Passes — the exposed boards beside the storage unit look the same as at entry with no new marks.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 720,
+          "y0": 700,
+          "x1": 1000,
+          "y1": 1000
+        },
+        "current_region": {
+          "x0": 800,
+          "y0": 690,
+          "x1": 1000,
+          "y1": 1000
+        }
+      },
+      {
+        "area": "Left wall and wainscoting",
+        "status": "unchanged",
+        "details": "The dark upper wall and white panelled dado on the left run are intact in both photos. The current image reads lighter and greyer, but that is consistent with the flatter, dimmer lighting; no scuffs, holes, hook marks or peeling paint are visible on the panelling or the painted section above it.",
+        "verdict_sentence": "Passes — the colour difference is lighting, and the wall and panelling show no scuffs, holes or peeling.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 0,
+          "y0": 0,
+          "x1": 190,
+          "y1": 320
+        },
+        "current_region": {
+          "x0": 0,
+          "y0": 0,
+          "x1": 185,
+          "y1": 300
+        }
+      },
+      {
+        "area": "Sheer window curtains",
+        "status": "unchanged",
+        "details": "The same pair of full-length sheer panels hangs either side of the window in both sets. They remain on their rod, with no tearing, sagging hems or staining discernible; the fuller draping in the current photo is simply how they have been left.",
+        "verdict_sentence": "Passes — the sheer curtains are still hung and intact with no tears or staining visible.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 170,
+          "y0": 0,
+          "x1": 440,
+          "y1": 330
+        },
+        "current_region": {
+          "x0": 290,
+          "y0": 50,
+          "x1": 865,
+          "y1": 600
+        }
+      },
+      {
+        "area": "Window blind",
+        "status": "unchanged",
+        "details": "The white venetian-style blind is raised at entry and lowered in the current photo. The slats sit level with no bent, missing or crooked sections and the head rail is straight.",
+        "verdict_sentence": "Passes — the blind is simply lowered, with slats level and no bent or missing sections.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 215,
+          "y0": 15,
+          "x1": 420,
+          "y1": 170
+        },
+        "current_region": {
+          "x0": 415,
+          "y0": 45,
+          "x1": 680,
+          "y1": 200
+        }
+      },
+      {
+        "area": "White storage/console unit (right wall)",
+        "status": "fair_wear_and_tear",
+        "details": "The unit remains in the same position against the right wall with drawers and open shelving intact. Its top, clear at entry, now carries loose items and the baskets below are disordered; no chips, ring marks or broken drawer fronts are visible, so the change is contents and light surface use rather than harm to the unit.",
+        "verdict_sentence": "Passes — the unit is structurally sound and only cluttered, with no chips or broken drawers visible.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 780,
+          "y0": 360,
+          "x1": 1000,
+          "y1": 730
+        },
+        "current_region": {
+          "x0": 880,
+          "y0": 355,
+          "x1": 1000,
+          "y1": 720
+        }
+      },
+      {
+        "area": "Timber rocking chair and side chair",
+        "status": "unchanged",
+        "details": "Both small timber chairs appear in each set, repositioned but complete. Legs, rockers, spindles and backs are all present with no splits, missing parts or wobble evident in the current photo.",
+        "verdict_sentence": "Passes — both timber chairs are complete and undamaged, merely moved to new positions.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 100,
+          "y0": 450,
+          "x1": 350,
+          "y1": 800
+        },
+        "current_region": {
+          "x0": 500,
+          "y0": 390,
+          "x1": 700,
+          "y1": 615
+        }
+      },
+      {
+        "area": "Framed wall art, upper right wall",
+        "status": "unchanged",
+        "details": "A framed print hung on the upper right wall at entry; it is absent in the current photo. The wall behind is in shadow so any residual hook or picture hole cannot be assessed from these images — inspect that spot directly.",
+        "verdict_sentence": "Passes on the evidence available, but the wall behind the removed frame is too shadowed to check for hook holes.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 930,
+          "y0": 35,
+          "x1": 1000,
+          "y1": 300
+        },
+        "current_region": {
+          "x0": 835,
+          "y0": 115,
+          "x1": 1000,
+          "y1": 370
+        }
+      },
+      {
+        "area": "Patterned area rug and white play table (centre of room)",
+        "status": "unchanged",
+        "details": "The large patterned rug and the low white play table that furnished the centre of the room at entry are both absent in the current photo. Removal of loose furnishings is not itself damage; their condition cannot be assessed because they are not shown, so they should be accounted for separately against the inventory.",
+        "verdict_sentence": "Passes with a note — the rug and play table are simply absent from the current photo, so their condition cannot be assessed.",
+        "entry_photo": 1,
+        "current_photo": 1,
+        "entry_region": {
+          "x0": 90,
+          "y0": 540,
+          "x1": 800,
+          "y1": 1000
+        },
+        "current_region": {
+          "x0": 150,
+          "y0": 620,
+          "x1": 800,
+          "y1": 1000
+        }
+      }
+    ],
+    "summary": "The room is recognisably the same play space and its fabric — walls, wainscoting, floorboards, curtains, blind and storage unit — appears unchanged, with no staining, holes or scuffing visible. The two concerns are the ceiling pendant, which was present at entry and is not visible now, and the chalkboard easel, which has gone from standing square to leaning collapsed against the left wall. The rug and white play table have been removed and the floor is heavily strewn with toys, so parts of the boards and the wall behind the removed picture could not be fully assessed and warrant a direct look. Overall this reads as an untidied but largely undamaged room, with fixture and furniture items needing verification against the inventory.",
+    "tenant_profile": {
+      "headline": "Room used hard as an everyday children's play space, rarely tidied",
+      "room_use": "The space has clearly stayed in service as an active play room: ride-on toys, soft toys, books, a toy workbench and small vehicles are spread across nearly the whole floor rather than confined to the storage unit. The rug and central table have been cleared out, opening the floor up for wheeled toys, which the tyre-marked green ride-on in the middle supports. Storage exists and is used, but only loosely — baskets and the unit top hold overflow rather than being packed away.",
+      "traits": [
+        {
+          "trait": "Floor-level play, rug removed",
+          "evidence": "The patterned rug and low white table are gone and the bare boards are given over to a green ride-on toy and scattered vehicles."
+        },
+        {
+          "trait": "Toys left out rather than stored",
+          "evidence": "Books, soft toys, puzzles and small vehicles cover most of the visible floor while the shelving baskets sit half-filled."
+        },
+        {
+          "trait": "Storage used as overflow surface",
+          "evidence": "The top of the white console, clear at entry, now carries loose items stacked on it."
+        },
+        {
+          "trait": "Rough handling of play furniture",
+          "evidence": "The chalkboard easel that stood upright at entry now leans against the left wall with the board slipped from its frame and the tray empty."
+        },
+        {
+          "trait": "Careful with walls and paintwork",
+          "evidence": "Despite the heavy floor use, the dado panelling and painted walls show no scuffs, marks or hook damage in the current photo."
+        }
+      ],
+      "confidence": "low",
+      "ratings": {
+        "cleanliness": 5,
+        "upkeep": 5,
+        "surface_care": 7,
+        "tidiness": 2,
+        "fixture_care": 4,
+        "damage_free": 5
+      }
+    }
+  }
+}
