@@ -10,6 +10,11 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
+    # Closest edge to Australian users, who are the ones uploading 5 MB photos.
+    # The US-hosted Anthropic API is a little further away, but that leg is
+    # noise next to a call that runs for seconds to minutes.
+    # Render cannot change this after the service is created; the default is oregon.
+    region: singapore
     healthCheckPath: /
     autoDeploy: true
     envVars:
