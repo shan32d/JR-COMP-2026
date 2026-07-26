@@ -7,6 +7,13 @@ import { handleMcpRequest, rejectMcpMethod } from "./mcp.js";
 import { generateListingTool, inspectConditionTool, verifyRepairTool } from "./tools/index.js";
 import { LlmError } from "./llm.js";
 import { getImage, putImage, UploadError, MAX_IMAGE_BYTES } from "./uploads.js";
+import {
+  addProperty,
+  listProperties,
+  propertyInputSchema,
+  removeProperty,
+  summarise,
+} from "./portfolio.js";
 import { descriptionField, photoUrlList, singlePhotoUrl, parseOrThrow, ValidationError } from "./validation.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -95,6 +102,29 @@ app.post("/api/verify-repair", async (req, res) => {
   } catch (err) {
     handleError(err, res);
   }
+});
+
+// ---------- portfolio ----------
+app.get("/api/portfolio", (_req, res) => {
+  res.json({ summary: summarise(), properties: listProperties() });
+});
+
+app.post("/api/portfolio", (req, res) => {
+  try {
+    const input = parseOrThrow(propertyInputSchema, req.body);
+    const property = addProperty(input);
+    res.json({ property, summary: summarise() });
+  } catch (err) {
+    handleError(err, res);
+  }
+});
+
+app.delete("/api/portfolio/:id", (req, res) => {
+  if (!removeProperty(req.params.id)) {
+    res.status(404).json({ error: "Property not found." });
+    return;
+  }
+  res.json({ summary: summarise() });
 });
 
 // ---------- MCP endpoint ----------

@@ -67,11 +67,17 @@
           <text class="seg-label"><textPath href="#lbl-maintenance" startOffset="50%">Maintenance</textPath></text>
         </g>
 
-        <!-- hub -->
-        <circle cx="260" cy="250" r="92" class="hub" />
-        <text x="260" y="238" class="hub-title">Every property,</text>
-        <text x="260" y="262" class="hub-title">every stage</text>
-        <text x="260" y="290" class="hub-sub">Click a stage →</text>
+        <!-- hub: portfolio snapshot, opens the full list -->
+        <g class="hub-group" data-view="view-portfolio" tabindex="0" role="button"
+           aria-label="Open portfolio">
+          <circle cx="260" cy="250" r="92" class="hub" />
+          <text x="260" y="203" class="hub-label">UNDER MANAGEMENT</text>
+          <text x="260" y="238" class="hub-count" id="hub-count">—</text>
+          <text x="260" y="258" class="hub-unit" id="hub-unit">properties</text>
+          <text x="260" y="285" class="hub-stat" id="hub-value">—</text>
+          <text x="260" y="303" class="hub-stat" id="hub-yield">—</text>
+          <text x="260" y="325" class="hub-sub">View portfolio →</text>
+        </g>
       </svg>
     </div>
 
@@ -89,6 +95,49 @@
         <p>Check the contractor's after photo against the reported damage before signing off the job.</p>
       </button>
     </div>
+  </section>
+
+  <!-- ============ PORTFOLIO ============ -->
+  <section id="view-portfolio" class="view">
+    <button class="back" data-view="view-home">← Back to the cycle</button>
+    <h2>🏢 Portfolio</h2>
+    <p class="hint">Properties currently under management. Values and rents are yours to enter — nothing here is AI-estimated. Gross yield is annual rent ÷ property value.</p>
+
+    <div class="stat-row" id="portfolio-stats"></div>
+
+    <table class="portfolio-table">
+      <thead>
+        <tr><th>Address</th><th>Status</th><th class="num">Value</th><th class="num">Rent/wk</th><th class="num">Yield</th><th></th></tr>
+      </thead>
+      <tbody id="portfolio-rows"></tbody>
+    </table>
+
+    <details class="add-property">
+      <summary>+ Add a property</summary>
+      <form id="property-form" class="listing-form" autocomplete="off">
+        <label class="f-full">
+          <span>Address</span>
+          <input type="text" id="p-address" placeholder="123 High St, Brisbane City QLD" />
+        </label>
+        <label>
+          <span>Property value (AUD)</span>
+          <input type="number" id="p-value" min="1" step="1000" placeholder="780000" />
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="p-status">
+            <option value="rented">Rented</option>
+            <option value="vacant">Vacant</option>
+          </select>
+        </label>
+        <label class="f-full">
+          <span>Weekly rent (AUD) <em>— rented properties only</em></span>
+          <input type="number" id="p-rent" min="1" step="10" placeholder="650" />
+        </label>
+        <div class="field-error f-full" id="portfolio-error"></div>
+        <button type="submit" class="primary f-full" id="property-btn">Add to portfolio</button>
+      </form>
+    </details>
   </section>
 
   <!-- ============ LISTING ============ -->

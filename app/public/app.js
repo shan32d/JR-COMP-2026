@@ -111,6 +111,97 @@ async function runAction(button, errorId, fn) {
   }
 }
 
+// ---------- Portfolio ----------
+const money = (n) =>
+  n >= 1_000_000 ? "$" + (n / 1_000_000).toFixed(2) + "M"
+  : n >= 1_000 ? "$" + Math.round(n / 1000) + "k"
+  : "$" + n;
+
+const moneyFull = (n) => "$" + n.toLocaleString("en-AU");
+
+function renderPortfolio({ summary, properties }) {
+  // hub on the home wheel
+  document.getElementById("hub-count").textContent = summary.count;
+  document.getElementById("hub-unit").textContent =
+    summary.count === 1 ? "property" : "properties";
+  document.getElementById("hub-value").textContent = money(summary.total_value) + " value";
+  document.getElementById("hub-yield").textContent =
+    summary.average_yield_pct !== null ? summary.average_yield_pct + "% avg yield" : "no rented properties";
+
+  // stat cards
+  document.getElementById("portfolio-stats").innerHTML = [
+    ["Properties", summary.count],
+    ["Rented / vacant", summary.rented + " / " + summary.vacant],
+    ["Total value", moneyFull(summary.total_value)],
+    ["Annual rent", moneyFull(summary.annual_rent)],
+    ["Avg gross yield", summary.average_yield_pct !== null ? summary.average_yield_pct + "%" : "—"],
+  ]
+    .map(([k, v]) => `<div class="stat"><span class="k">${k}</span><span class="v">${v}</span></div>`)
+    .join("");
+
+  // table
+  const rows = document.getElementById("portfolio-rows");
+  if (properties.length === 0) {
+    rows.innerHTML = `<tr><td colspan="6" class="empty">No properties yet — add one below.</td></tr>`;
+    return;
+  }
+  rows.innerHTML = properties
+    .map(
+      (p) =>
+        `<tr><td>${escapeHtml(p.address)}</td>` +
+        `<td><span class="badge ${p.status === "rented" ? "unchanged" : "fair_wear_and_tear"}">${p.status}</span></td>` +
+        `<td class="num">${moneyFull(p.value)}</td>` +
+        `<td class="num">${p.weekly_rent ? moneyFull(p.weekly_rent) : "—"}</td>` +
+        `<td class="num">${p.yield_pct !== null ? p.yield_pct + "%" : "—"}</td>` +
+        `<td class="num"><button class="row-remove" data-id="${p.id}" title="Remove">×</button></td></tr>`,
+    )
+    .join("");
+}
+
+async function loadPortfolio() {
+  try {
+    renderPortfolio(await (await fetch("/api/portfolio")).json());
+  } catch {
+    document.getElementById("hub-count").textContent = "—";
+  }
+}
+
+document.getElementById("portfolio-rows").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".row-remove");
+  if (!btn) return;
+  const res = await fetch("/api/portfolio/" + btn.dataset.id, { method: "DELETE" });
+  if (res.ok) loadPortfolio();
+});
+
+document.getElementById("property-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const address = document.getElementById("p-address").value.trim();
+  const value = Number(document.getElementById("p-value").value);
+  const status = document.getElementById("p-status").value;
+  const rentRaw = document.getElementById("p-rent").value.trim();
+  const errorEl = document.getElementById("portfolio-error");
+
+  if (address.length < 3) { errorEl.textContent = "Please enter the property address."; return; }
+  if (!value || value <= 0) { errorEl.textContent = "Please enter the property value."; return; }
+  if (status === "rented" && !rentRaw) {
+    errorEl.textContent = "A rented property needs a weekly rent — that's what the yield is calculated from.";
+    return;
+  }
+
+  runAction(document.getElementById("property-btn"), "portfolio-error", async () => {
+    await postJson("/api/portfolio", {
+      address,
+      value,
+      status,
+      ...(rentRaw ? { weekly_rent: Number(rentRaw) } : {}),
+    });
+    document.getElementById("property-form").reset();
+    await loadPortfolio();
+  });
+});
+
+loadPortfolio();
+
 // ---------- Listing Generator ----------
 // Each form field becomes one labelled line of the description sent to the API,
 // so the backend contract (and the MCP tool) stays plain text.
