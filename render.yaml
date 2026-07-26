@@ -1,0 +1,17 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo.
+# ANTHROPIC_API_KEY is deliberately NOT in this file. `sync: false` makes Render
+# prompt for it in the dashboard, so the key is entered there and never committed.
+services:
+  - type: web
+    name: property-management-assistant
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false

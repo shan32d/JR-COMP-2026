@@ -55,6 +55,35 @@ cp .env.example .env    # add your ANTHROPIC_API_KEY
 npm run dev             # → http://localhost:3000
 ```
 
+The Inspection page has a **"See an example"** button that renders a pre-generated
+report from `app/fixtures/example-inspection.json` — no API key and no model call
+needed, so the demo works on a cold clone. Regenerate it with the dev server up:
+
+```bash
+npm run build:example
+```
+
+## Deploy
+
+The app is a long-lived Express server (some calls run up to ~3 minutes), so it
+needs a container host rather than a serverless platform with a short request
+timeout. A `Dockerfile` and a Render blueprint are included.
+
+**Render** — dashboard → New → Blueprint → pick this repo. `render.yaml` declares
+everything except `ANTHROPIC_API_KEY`, which is marked `sync: false` so Render
+prompts for it in the dashboard and it never lands in the repo.
+
+**Anywhere else that takes a Dockerfile** (Fly, Railway, Cloud Run):
+
+```bash
+docker build -t propmate .
+docker run -p 3000:3000 -e ANTHROPIC_API_KEY=... propmate
+```
+
+> ⚠️ A public deployment calls the Anthropic API with **your** key on behalf of
+> anyone who opens the link, and there is no auth or rate limiting in front of it.
+> Put it behind access control, or keep an eye on spend.
+
 ## Use it from Claude
 
 ```bash
