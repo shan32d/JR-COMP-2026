@@ -57,7 +57,11 @@ app.get("/uploads/:id", (req, res) => {
 });
 
 // ---------- feature endpoints (each button maps 1:1 to a tool) ----------
-const listingRequest = z.object({ description: descriptionField });
+const listingRequest = z.object({
+  description: descriptionField,
+  previous_listing: z.string().trim().max(8000).optional(),
+  feedback: z.string().trim().max(1000).optional(),
+});
 app.post("/api/generate-listing", async (req, res) => {
   try {
     const input = parseOrThrow(listingRequest, req.body);

@@ -112,38 +112,140 @@ async function runAction(button, errorId, fn) {
 }
 
 // ---------- Listing Generator ----------
-const EXAMPLE_INPUT =
-  "123 High St, Brisbane City, $650 per week, bond four weeks' rent, available from July 25th 2026, " +
-  "2 bed 2 bath apartment, unfurnished, one secure car space, pet friendly, air-conditioned, " +
-  "balcony with river views, building has gym and pool, 3 min walk to train station, 12-month lease preferred.";
+// Each form field becomes one labelled line of the description sent to the API,
+// so the backend contract (and the MCP tool) stays plain text.
+const LISTING_FIELDS = [
+  ["f-address", "Address"],
+  ["f-type", "Property type"],
+  ["f-rent", "Weekly rent"],
+  ["f-beds", "Bedrooms"],
+  ["f-baths", "Bathrooms"],
+  ["f-bond", "Bond"],
+  ["f-available", "Available from"],
+  ["f-furnish", "Furnishing"],
+  ["f-parking", "Parking"],
+  ["f-pets", "Pets"],
+  ["f-term", "Minimum term"],
+  ["f-other", "Other details"],
+];
+
+const EXAMPLE_VALUES = {
+  "f-address": "123 High St, Brisbane City",
+  "f-type": "Apartment",
+  "f-rent": "$650",
+  "f-beds": "2",
+  "f-baths": "2",
+  "f-bond": "4 weeks' rent",
+  "f-available": "2026-07-25",
+  "f-furnish": "Unfurnished",
+  "f-parking": "1 secure car space",
+  "f-pets": "Pet friendly",
+  "f-term": "12 months",
+  "f-other":
+    "Air-conditioned throughout, private balcony with river views, building has a gym and pool, 3 minute walk to the train station.",
+};
+
+function composeDescription() {
+  return LISTING_FIELDS.map(([id, label]) => {
+    const value = document.getElementById(id).value.trim();
+    return value ? `${label}: ${value}` : null;
+  })
+    .filter(Boolean)
+    .join("\n");
+}
+
+let lastListing = "";
+
+function renderListing(data) {
+  lastListing = data.listing;
+  document.getElementById("listing-empty").classList.add("hidden");
+  const textEl = document.getElementById("listing-text");
+  textEl.textContent = data.listing;
+  textEl.classList.remove("hidden");
+  document.getElementById("listing-actions").classList.remove("hidden");
+
+  const missingEl = document.getElementById("listing-missing");
+  if (data.completeness.complete || data.completeness.missing.length === 0) {
+    missingEl.innerHTML = `<div class="complete-card">✅ All key information is present.</div>`;
+  } else {
+    const items = data.completeness.missing
+      .map((m) => `<li><strong>${escapeHtml(m.field)}</strong> — ${escapeHtml(m.why_it_matters)}</li>`)
+      .join("");
+    missingEl.innerHTML =
+      `<div class="missing-card"><h4>⚠️ Missing information</h4>` +
+      `<p>Fill these in on the left, then generate again:</p><ul>${items}</ul></div>`;
+  }
+}
 
 document.getElementById("listing-example").addEventListener("click", (e) => {
   e.preventDefault();
-  document.getElementById("listing-input").value = EXAMPLE_INPUT;
+  Object.entries(EXAMPLE_VALUES).forEach(([id, value]) => {
+    document.getElementById(id).value = value;
+  });
+  document.getElementById("listing-error").textContent = "";
 });
 
-document.getElementById("listing-btn").addEventListener("click", () => {
-  const description = document.getElementById("listing-input").value.trim();
+document.getElementById("listing-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const description = composeDescription();
   if (description.length < 10) {
     document.getElementById("listing-error").textContent =
-      "Please describe the property in at least 10 characters.";
+      "Please fill in at least the address, or describe the property under Other details.";
     return;
   }
   runAction(document.getElementById("listing-btn"), "listing-error", async () => {
-    const data = await postJson("/api/generate-listing", { description });
-    document.getElementById("listing-text").textContent = data.listing;
-    const missingEl = document.getElementById("listing-missing");
-    if (data.completeness.complete || data.completeness.missing.length === 0) {
-      missingEl.innerHTML = `<div class="complete-card">✅ All key information is present.</div>`;
-    } else {
-      const items = data.completeness.missing
-        .map((m) => `<li><strong>${escapeHtml(m.field)}</strong> — ${escapeHtml(m.why_it_matters)}</li>`)
-        .join("");
-      missingEl.innerHTML =
-        `<div class="missing-card"><h4>⚠️ Missing information</h4>` +
-        `<p>Consider adding these details, then generate again:</p><ul>${items}</ul></div>`;
-    }
-    document.getElementById("listing-result").classList.remove("hidden");
+    renderListing(await postJson("/api/generate-listing", { description }));
+  });
+});
+
+// --- copy ---
+document.getElementById("listing-copy").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  try {
+    await navigator.clipboard.writeText(lastListing);
+  } catch {
+    // clipboard API needs a secure context; fall back to a hidden textarea
+    const ta = document.createElement("textarea");
+    ta.value = lastListing;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+  btn.textContent = "✅ Copied";
+  setTimeout(() => (btn.textContent = "📋 Copy"), 1600);
+});
+
+// --- feedback: revise the draft instead of starting over ---
+const feedbackBox = document.getElementById("listing-feedback-box");
+const feedbackText = document.getElementById("listing-feedback-text");
+
+document.getElementById("listing-feedback-btn").addEventListener("click", () => {
+  feedbackBox.classList.remove("hidden");
+  feedbackText.focus();
+});
+document.getElementById("listing-feedback-cancel").addEventListener("click", () => {
+  feedbackBox.classList.add("hidden");
+  feedbackText.value = "";
+});
+
+document.getElementById("listing-regen").addEventListener("click", () => {
+  const feedback = feedbackText.value.trim();
+  if (feedback.length < 3) {
+    document.getElementById("listing-error").textContent = "Tell the AI what to change first.";
+    return;
+  }
+  runAction(document.getElementById("listing-regen"), "listing-error", async () => {
+    const data = await postJson("/api/generate-listing", {
+      description: composeDescription(),
+      previous_listing: lastListing,
+      feedback,
+    });
+    renderListing(data);
+    feedbackBox.classList.add("hidden");
+    feedbackText.value = "";
   });
 });
 

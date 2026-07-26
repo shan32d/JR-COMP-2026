@@ -95,16 +95,120 @@
   <section id="view-listing" class="view">
     <button class="back" data-view="view-home">← Back to the cycle</button>
     <h2>📝 Listing Generator</h2>
-    <p class="hint">Type words, phrases, or sentences describing the property. One click generates a listing-ready description and flags any missing information.
+    <p class="hint">Fill in what you know — anything you leave blank gets flagged after generating.
       <a href="#" id="listing-example">Try example</a></p>
-    <textarea id="listing-input" rows="5"
-      placeholder="e.g. 123 High St Brisbane City, $650 per week, 2 bed 2 bath, unfurnished, pet friendly, balcony with river views, 3 min walk to train station"></textarea>
-    <div class="field-error" id="listing-error"></div>
-    <button id="listing-btn" class="primary">Generate Listing</button>
-    <div id="listing-result" class="result hidden">
-      <h3>Generated listing</h3>
-      <pre id="listing-text"></pre>
-      <div id="listing-missing"></div>
+
+    <div class="listing-layout">
+      <!-- ---------- left: the form ---------- -->
+      <form class="listing-form" id="listing-form" autocomplete="off">
+        <label class="f-full">
+          <span>Address</span>
+          <input type="text" id="f-address" placeholder="123 High St, Brisbane City" />
+        </label>
+
+        <label>
+          <span>Property type</span>
+          <select id="f-type">
+            <option value="">—</option>
+            <option>Apartment</option><option>House</option>
+            <option>Townhouse</option><option>Unit</option><option>Room in share house</option>
+          </select>
+        </label>
+        <label>
+          <span>Weekly rent</span>
+          <input type="text" id="f-rent" placeholder="$650" />
+        </label>
+
+        <label>
+          <span>Bedrooms</span>
+          <input type="number" id="f-beds" min="0" max="20" placeholder="2" />
+        </label>
+        <label>
+          <span>Bathrooms</span>
+          <input type="number" id="f-baths" min="0" max="20" placeholder="2" />
+        </label>
+
+        <label>
+          <span>Bond</span>
+          <input type="text" id="f-bond" placeholder="4 weeks' rent" />
+        </label>
+        <label>
+          <span>Available from</span>
+          <input type="date" id="f-available" />
+        </label>
+
+        <label>
+          <span>Furnishing</span>
+          <select id="f-furnish">
+            <option value="">—</option>
+            <option>Unfurnished</option><option>Partly furnished</option><option>Fully furnished</option>
+          </select>
+        </label>
+        <label>
+          <span>Parking</span>
+          <select id="f-parking">
+            <option value="">—</option>
+            <option>No parking</option><option>Street parking</option>
+            <option>1 secure car space</option><option>2 secure car spaces</option><option>Garage</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Pets</span>
+          <select id="f-pets">
+            <option value="">—</option>
+            <option>Pet friendly</option><option>No pets</option><option>Pets negotiable</option>
+          </select>
+        </label>
+        <label>
+          <span>Minimum term</span>
+          <select id="f-term">
+            <option value="">—</option>
+            <option>6 months</option><option>12 months</option>
+            <option>24 months</option><option>Flexible</option>
+          </select>
+        </label>
+
+        <label class="f-full">
+          <span>Other details</span>
+          <textarea id="f-other" rows="5"
+            placeholder="Anything else worth advertising — air-conditioning, balcony with river views, building gym and pool, 3 min walk to the train station…"></textarea>
+        </label>
+
+        <div class="field-error f-full" id="listing-error"></div>
+        <button type="submit" id="listing-btn" class="primary f-full">Generate Listing</button>
+      </form>
+
+      <!-- ---------- right: the result ---------- -->
+      <div class="listing-output">
+        <div class="output-head">
+          <h3>Generated listing</h3>
+          <div class="output-actions hidden" id="listing-actions">
+            <button type="button" class="ghost" id="listing-copy">📋 Copy</button>
+            <button type="button" class="ghost" id="listing-feedback-btn">💬 Give feedback</button>
+          </div>
+        </div>
+
+        <div class="output-empty" id="listing-empty">
+          <p>Your listing will appear here.</p>
+          <p class="sub">Fill in the details on the left and press <strong>Generate Listing</strong>.</p>
+        </div>
+
+        <pre id="listing-text" class="hidden"></pre>
+        <div id="listing-missing"></div>
+
+        <div class="feedback-box hidden" id="listing-feedback-box">
+          <label>
+            <span>What should change?</span>
+            <textarea id="listing-feedback-text" rows="3"
+              placeholder="e.g. make it shorter, lead with the river views, drop the emoji"></textarea>
+          </label>
+          <div class="feedback-actions">
+            <button type="button" class="primary small" id="listing-regen">Regenerate with feedback</button>
+            <button type="button" class="ghost" id="listing-feedback-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
